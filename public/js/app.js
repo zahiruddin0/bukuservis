@@ -780,7 +780,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.5</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.6</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1498,14 +1498,13 @@
     return pts;
   }
 
-  function odoAt(pts, iso, base) {
+  function odoAt(pts, iso) {
     let best = null;
     pts.forEach((p) => {
       if (String(p.date) > iso) return;
       if (!best || p.odo > best.odo || (p.odo === best.odo && p.date > best.date)) best = p;
     });
-    if (best) return best;
-    return base > 0 ? { date: null, odo: base, kind: 'base', label: 'Odometer asas' } : null;
+    return best;
   }
 
   function openOdoHistory() {
@@ -1526,17 +1525,13 @@
 
     const milestoneHTML = milestones.map((m) => {
       const iso = daysAgoISO(m[1]);
-      const p = odoAt(pts, iso, base);
-      const sub = p
-        ? (p.kind === 'base' ? 'anggaran dari odometer asas' : 'rekod ' + fmtDate(p.date) + ' · edit / padam')
-        : 'tiada rekod lagi';
+      const p = odoAt(pts, iso);
+      if (!p) return '';
       const inner = `
         <span class="k">${m[0]}<br><span class="muted tiny">${fmtDate(iso)}</span></span>
-        <span class="v">${p ? nf(p.odo) + ' km' : '—'}<br><span class="muted tiny">${sub}</span></span>`;
-      return (p && p.id)
-        ? `<button class="kv kv-btn" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">${inner}</button>`
-        : `<div class="kv">${inner}</div>`;
-    }).join('');
+        <span class="v">${nf(p.odo)} km<br><span class="muted tiny">rekod ${fmtDate(p.date)} · edit / padam</span></span>`;
+      return `<button class="kv kv-btn" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">${inner}</button>`;
+    }).filter(Boolean).join('');
 
     let timeline = '';
     for (let i = pts.length - 1; i >= 0; i--) {
@@ -1579,17 +1574,18 @@
         <div class="kv"><span class="k">Odometer semasa</span><span class="v">${nf(odoNow)} km</span></div>
         <div class="kv"><span class="k">Jarak direkod</span><span class="v">${pts.length > 1 ? nf(Math.max(...pts.map((p) => p.odo)) - Math.min(...pts.map((p) => p.odo))) + ' km' : '—'}</span></div>
 
+        ${milestoneHTML ? `
         <div class="section" style="margin:18px 0 0">
           <h2 class="section-title">Mileage pada tarikh</h2>
           ${milestoneHTML}
-        </div>
+        </div>` : ''}
 
         <div class="section" style="margin:18px 0 0">
           <h2 class="section-title">Semua bacaan <span class="count">${pts.length}</span></h2>
           ${timeline || `<div class="note">Belum ada rekod mileage. Tambah bacaan pertama untuk mula.</div>`}
         </div>
 
-        <div class="note">Nilai ini dikira daripada rekod yang kau masukkan, bukan bacaan meter hidup. Jika tiada rekod pada tarikh itu, sistem guna rekod terakhir sebelum tarikh tersebut.</div>
+        <div class="note">Nilai ini dikira daripada rekod yang kau masukkan, bukan bacaan meter hidup. Baris "Mileage pada tarikh" hanya dipaparkan jika ada rekod sebenar pada atau sebelum tarikh itu — tiada anggaran dibuat daripada odometer asas.</div>
 
         <div class="sheet-foot">
           <button class="btn btn-ghost" type="button" data-close>Tutup</button>
