@@ -795,6 +795,29 @@ table.tbl .strong { font-weight: 700; }
 .kv-btn:hover { background: var(--surface-2); }
 .kv-btn .v { color: var(--accent); }
 
+.odo-row {
+  border-bottom: 1px solid var(--line-2);
+  padding: 10px 0;
+}
+.odo-row:last-child { border-bottom: 0; }
+.odo-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.odo-main .k { color: var(--ink-3); font-size: 13.5px; }
+.odo-main .v { font-weight: 600; text-align: right; white-space: nowrap; }
+.odo-acts { display: flex; gap: 6px; justify-content: flex-end; margin-top: 8px; }
+
 .hr { height: 1px; background: var(--line); border: 0; margin: 18px 0; }
 
 @media (max-width: 400px) {

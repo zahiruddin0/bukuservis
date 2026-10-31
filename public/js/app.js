@@ -762,7 +762,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.3</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.4</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1499,13 +1499,14 @@
       const iso = daysAgoISO(m[1]);
       const p = odoAt(pts, iso, base);
       const sub = p
-        ? (p.kind === 'base' ? 'anggaran dari odometer asas' : 'rekod ' + fmtDate(p.date))
+        ? (p.kind === 'base' ? 'anggaran dari odometer asas' : 'rekod ' + fmtDate(p.date) + ' · edit / padam')
         : 'tiada rekod lagi';
-      return `
-        <div class="kv">
-          <span class="k">${m[0]}<br><span class="muted tiny">${fmtDate(iso)}</span></span>
-          <span class="v">${p ? nf(p.odo) + ' km' : '—'}<br><span class="muted tiny">${sub}</span></span>
-        </div>`;
+      const inner = `
+        <span class="k">${m[0]}<br><span class="muted tiny">${fmtDate(iso)}</span></span>
+        <span class="v">${p ? nf(p.odo) + ' km' : '—'}<br><span class="muted tiny">${sub}</span></span>`;
+      return (p && p.id)
+        ? `<button class="kv kv-btn" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">${inner}</button>`
+        : `<div class="kv">${inner}</div>`;
     }).join('');
 
     let timeline = '';
@@ -1516,17 +1517,28 @@
       const kindText = p.kind === 'visit' ? 'Servis' : p.kind === 'fuel' ? 'Isi minyak' : 'Bacaan';
       const deltaText = delta != null ? ' · ' + (delta < 0 ? '−' : '+') + nf(Math.abs(delta)) + ' km' : '';
       timeline += `
-        <button class="kv kv-btn" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">
-          <span class="k">${fmtDate(p.date)} · ${esc(p.label)}<br><span class="muted tiny">${kindText}${deltaText} · edit / padam</span></span>
-          <span class="v">${nf(p.odo)} km</span>
-        </button>`;
+        <div class="odo-row">
+          <button class="odo-main" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">
+            <span class="k">${fmtDate(p.date)} · ${esc(p.label)}<br><span class="muted tiny">${kindText}${deltaText}</span></span>
+            <span class="v">${nf(p.odo)} km</span>
+          </button>
+          <div class="odo-acts">
+            <button class="btn btn-ghost btn-sm" type="button" data-act="edit-${p.kind}" data-id="${p.id}">Edit</button>
+            <button class="btn btn-danger btn-sm" type="button" data-act="del-${p.kind}" data-id="${p.id}">Padam</button>
+          </div>
+        </div>`;
     }
 
     if (base > 0) {
       timeline += `
-        <div class="kv">
-          <span class="k">Odometer asas<br><span class="muted tiny">nilai permulaan</span></span>
-          <span class="v">${nf(base)} km</span>
+        <div class="odo-row">
+          <div class="odo-main">
+            <span class="k">Odometer asas<br><span class="muted tiny">nilai permulaan</span></span>
+            <span class="v">${nf(base)} km</span>
+          </div>
+          <div class="odo-acts">
+            <button class="btn btn-ghost btn-sm" type="button" data-act="edit-vehicle" data-id="${v.id}">Edit asas</button>
+          </div>
         </div>`;
     }
 

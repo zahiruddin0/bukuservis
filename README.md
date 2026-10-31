@@ -174,8 +174,10 @@ Butang **+ Bacaan** pada kad kenderaan. Berguna bila kau hantar servis dan bengk
 
 Tekan nombor odometer besar pada kad kenderaan, atau **+ → 📈 Sejarah mileage**. Kau akan nampak:
 
-- **Mileage pada tarikh** — 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas. Sistem guna rekod terakhir sebelum tarikh itu. Jika belum ada rekod, nilai asas kenderaan dipaparkan sebagai anggaran.
-- **Semua bacaan** — timeline penuh servis, isi minyak dan bacaan manual, termasuk jarak antara rekod.
+- **Mileage pada tarikh** — 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas. Sistem guna rekod terakhir sebelum tarikh itu. Jika belum ada rekod, nilai asas kenderaan dipaparkan sebagai anggaran. Baris yang ada rekod boleh ditekan terus untuk edit atau padam.
+- **Semua bacaan** — timeline penuh servis, isi minyak dan bacaan manual, termasuk jarak antara rekod. Setiap baris ada butang **Edit** dan **Padam**; tekan bahagian teks untuk buka butiran penuh.
+
+Nilai **Odometer asas** juga boleh diubah melalui butang **Edit asas** di bahagian bawah timeline.
 
 Semua nilai dikira daripada rekod yang kau masukkan sendiri — bukan bacaan meter hidup.
 
