@@ -12,7 +12,7 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **Fuel log** — liter, harga, stesen, km/L (hanya untuk isi penuh).
 - **Laporan** — kos bulanan, kos per km, kos ikut kategori, prestasi ikut stesen minyak.
 - **Sejarah mileage** — lihat bacaan odometer pada 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas, serta timeline penuh.
-- **Semua rekod boleh diedit** — servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
+- **Semua rekod boleh diedit atau dipadam** - servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
 - **Tema auto / cerah / gelap** — ikut sistem atau pilih sendiri dalam Tetapan.
 - **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
 
@@ -177,16 +177,18 @@ Tekan nombor odometer besar pada kad kenderaan, atau **+ → 📈 Sejarah mileag
 
 Semua nilai dikira daripada rekod yang kau masukkan sendiri — bukan bacaan meter hidup.
 
-### Edit rekod
+### Edit dan padam rekod
 
-Setiap rekod boleh dibetulkan bila-bila masa:
+Setiap rekod boleh dibetulkan atau dibuang bila-bila masa:
 
-1. Buka **Sejarah** (atau kad servis pada dashboard).
+1. Buka **Sejarah** (atau kad servis pada dashboard, atau **Sejarah mileage**).
 2. Tekan rekod yang nak diubah.
-3. Tekan **Edit**.
-4. Betulkan apa-apa medan — tarikh, odometer, jenama, produk, harga, liter, stesen, nota — kemudian **Simpan perubahan**.
+3. Tekan **Edit** untuk betulkan apa-apa medan — tarikh, odometer, jenama, produk, harga, liter, stesen, nota — kemudian **Simpan perubahan**.
+4. Tekan **Buang rekod** untuk padam rekod itu (akan minta pengesahan).
 
-Untuk rekod servis, kau juga boleh tambah, buang atau tukar item dalam lawatan yang sama. Untuk kenderaan, buka **Tetapan → Kenderaan → Edit**.
+Di dalam borang edit, butang **Buang rekod** juga tersedia di sebelah kiri. Untuk rekod servis, kau boleh tambah, buang atau tukar item dalam lawatan yang sama. Untuk kenderaan, buka **Tetapan → Kenderaan → Edit** (memadam kenderaan akan memadam semua rekodnya sekali).
+
+Semua baris dalam **Sejarah mileage** dan **Sejarah item ini** boleh ditekan terus untuk edit atau padam.
 
 ## 5. Sandaran data
 

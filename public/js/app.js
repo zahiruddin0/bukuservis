@@ -759,7 +759,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.1</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.2</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -911,6 +911,7 @@
     sheet({
       title: isEdit ? 'Edit rekod servis' : 'Rekod servis',
       submit: isEdit ? 'Simpan perubahan' : 'Simpan servis',
+      danger: isEdit ? 'Buang rekod' : null,
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
@@ -985,6 +986,14 @@
           items: items
         });
         afterMutate(db, isEdit ? 'Rekod servis dikemas kini' : 'Servis disimpan');
+      },
+      onDanger: async () => {
+        if (!confirm('Buang rekod servis ini? Semua item di dalamnya akan dipadam.')) return;
+        try {
+          const db = await API.mutate('visit', 'delete', { id: existing.id });
+          closeSheet();
+          afterMutate(db, 'Rekod servis dibuang');
+        } catch (err) { toast(err.message, true); }
       }
     });
 
@@ -1060,6 +1069,7 @@
     sheet({
       title: isEdit ? 'Edit isi minyak' : 'Isi minyak',
       submit: isEdit ? 'Simpan perubahan' : 'Simpan isi minyak',
+      danger: isEdit ? 'Buang rekod' : null,
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
@@ -1123,6 +1133,14 @@
           notes: fd.get('notes')
         });
         afterMutate(db, isEdit ? 'Rekod minyak dikemas kini' : 'Isi minyak disimpan');
+      },
+      onDanger: async () => {
+        if (!confirm('Buang rekod isi minyak ini?')) return;
+        try {
+          const db = await API.mutate('fuel', 'delete', { id: existing.id });
+          closeSheet();
+          afterMutate(db, 'Rekod minyak dibuang');
+        } catch (err) { toast(err.message, true); }
       }
     });
   }
@@ -1135,6 +1153,7 @@
     sheet({
       title: isEdit ? 'Edit bacaan odometer' : 'Bacaan odometer',
       submit: isEdit ? 'Simpan perubahan' : 'Simpan bacaan',
+      danger: isEdit ? 'Buang rekod' : null,
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
@@ -1167,6 +1186,14 @@
           notes: fd.get('notes')
         });
         afterMutate(db, isEdit ? 'Bacaan dikemas kini' : 'Bacaan disimpan');
+      },
+      onDanger: async () => {
+        if (!confirm('Buang bacaan odometer ini?')) return;
+        try {
+          const db = await API.mutate('reading', 'delete', { id: existing.id });
+          closeSheet();
+          afterMutate(db, 'Bacaan dibuang');
+        } catch (err) { toast(err.message, true); }
       }
     });
   }
@@ -1416,15 +1443,15 @@
     state.db.visits.forEach((x) => {
       if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
       const names = (x.items || []).map(itemName);
-      pts.push({ date: x.date, odo: num(x.odometer), kind: 'visit', label: names.join(' + ') || 'Servis' });
+      pts.push({ id: x.id, date: x.date, odo: num(x.odometer), kind: 'visit', label: names.join(' + ') || 'Servis' });
     });
     state.db.fuel_logs.forEach((x) => {
       if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
-      pts.push({ date: x.date, odo: num(x.odometer), kind: 'fuel', label: 'Isi minyak ' + num(x.liters).toFixed(2) + ' L' });
+      pts.push({ id: x.id, date: x.date, odo: num(x.odometer), kind: 'fuel', label: 'Isi minyak ' + num(x.liters).toFixed(2) + ' L' });
     });
     state.db.readings.forEach((x) => {
       if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
-      pts.push({ date: x.date, odo: num(x.odometer), kind: 'reading', label: String(x.notes || '').trim() || 'Bacaan manual' });
+      pts.push({ id: x.id, date: x.date, odo: num(x.odometer), kind: 'reading', label: String(x.notes || '').trim() || 'Bacaan manual' });
     });
     pts.sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.odo - b.odo);
     return pts;
@@ -1477,10 +1504,10 @@
       const kindText = p.kind === 'visit' ? 'Servis' : p.kind === 'fuel' ? 'Isi minyak' : 'Bacaan';
       const deltaText = delta != null ? ' · ' + (delta < 0 ? '−' : '+') + nf(Math.abs(delta)) + ' km' : '';
       timeline += `
-        <div class="kv">
-          <span class="k">${fmtDate(p.date)} · ${esc(p.label)}<br><span class="muted tiny">${kindText}${deltaText}</span></span>
+        <button class="kv kv-btn" type="button" data-act="event-detail" data-kind="${p.kind}" data-id="${p.id}">
+          <span class="k">${fmtDate(p.date)} · ${esc(p.label)}<br><span class="muted tiny">${kindText}${deltaText} · edit / padam</span></span>
           <span class="v">${nf(p.odo)} km</span>
-        </div>`;
+        </button>`;
     }
 
     if (base > 0) {
@@ -1548,10 +1575,11 @@
         <div class="section" style="margin:18px 0 0">
           <h2 class="section-title">Sejarah item ini <span class="count">${records.length}</span></h2>
           ${records.length ? records.map((r) => `
-            <div class="kv">
+            <button class="kv kv-btn" type="button" data-act="event-detail" data-kind="visit" data-id="${r.visit.id}">
               <span class="k">${fmtDate(r.visit.date)} · ${kmText(r.visit.odometer)}</span>
               <span class="v">${esc([r.item.brand, r.item.product].filter(Boolean).join(' ') || '—')}</span>
-            </div>`).join('') : `<div class="note">Belum ada rekod untuk item ini.</div>`}
+            </button>`).join('') : `<div class="note">Belum ada rekod untuk item ini.</div>`}
+          ${records.length ? `<div class="note">Klik mana-mana rekod untuk edit atau padam.</div>` : ''}
         </div>
 
         <div class="sheet-foot">
