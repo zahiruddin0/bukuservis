@@ -48,15 +48,22 @@ Kemudian buka `http://localhost:8123`.
 
 ### 2.1 Push ke GitHub
 
+Repo: `https://github.com/zahiruddin0/bukuservis`
+
+Kalau repo belum wujud, buat repo **kosong** di <https://github.com/new>:
+
+- Repository name: `bukuservis`
+- Public atau Private (dua-dua boleh dengan Cloudflare Pages)
+- **Jangan** tanda "Add a README", ".gitignore" atau "license"
+
+Kemudian dari folder projek:
+
 ```powershell
 cd bukuservis
-git init
-git add .
-git commit -m "BukuServis v1"
-gh repo create bukuservis --private --source=. --push
+git push -u origin main
 ```
 
-Boleh juga buat repo melalui laman GitHub dan push secara manual.
+Kali pertama, Git Credential Manager akan buka tetingkap log masuk GitHub — klik **Sign in with your browser** dan benarkan akses. Selepas itu kau tak perlu log masuk lagi.
 
 ### 2.2 Buat database D1
 
@@ -87,9 +94,16 @@ wrangler d1 execute bukuservis --remote --file=./schema.sql
 
 1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
 2. Pilih repo `bukuservis`.
-3. Build command: **kosongkan**. Build output directory: **`/`**.
-   - Jika repo mengandungi folder `bukuservis/` di dalamnya, letak **`bukuservis`**.
-4. Deploy.
+3. **Project name: `bukuservis-zahir`** — inilah yang jadi `bukuservis-zahir.pages.dev`.
+4. Tetapan build:
+   - Framework preset: **None**
+   - Build command: **kosongkan**
+   - Build output directory: **`/`**
+   - Root directory: **kosongkan** (repo root memang folder app)
+5. **Save and Deploy**.
+
+Projek akan dapat URL `https://bukuservis-zahir.pages.dev`.
+
 
 ### 2.4 Tetapkan binding dan secret
 
