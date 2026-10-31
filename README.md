@@ -11,8 +11,10 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **Jenama boleh bertukar** — jenis servis kekal, produk/jenama direkod per lawatan. Jadi laporan boleh bandingkan kos per 1,000 km antara jenama minyak.
 - **Fuel log** — liter, harga, stesen, km/L (hanya untuk isi penuh).
 - **Laporan** — kos bulanan, kos per km, kos ikut kategori, prestasi ikut stesen minyak.
+- **Sejarah mileage** — lihat bacaan odometer pada 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas, serta timeline penuh.
+- **Semua rekod boleh diedit** — servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
 - **Tema auto / cerah / gelap** — ikut sistem atau pilih sendiri dalam Tetapan.
-- **PIN login** — satu PIN, cookie session bertandatangan.
+- **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
 
 ## Struktur fail
 
@@ -93,7 +95,7 @@ Dalam projek Worker → **Settings**:
 
 | Nama | Nilai |
 |---|---|
-| `APP_PIN` | PIN log masuk kau (6 digit, jangan guna PIN bank) |
+| `APP_PIN` | PIN atau kata laluan log masuk kau (huruf + nombor dibenarkan, jangan guna PIN bank) |
 | `SESSION_SECRET` | string rawak panjang |
 
 Jana `SESSION_SECRET`:
@@ -146,6 +148,26 @@ Butang **+** → **Isi minyak**. Tandakan **Isi penuh** supaya km/L boleh dikira
 
 Butang **+ Bacaan** pada kad kenderaan. Berguna bila kau hantar servis dan bengkel tidak beri resit.
 
+### Sejarah mileage
+
+Tekan nombor odometer besar pada kad kenderaan, atau **+ → 📈 Sejarah mileage**. Kau akan nampak:
+
+- **Mileage pada tarikh** — 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas. Sistem guna rekod terakhir sebelum tarikh itu. Jika belum ada rekod, nilai asas kenderaan dipaparkan sebagai anggaran.
+- **Semua bacaan** — timeline penuh servis, isi minyak dan bacaan manual, termasuk jarak antara rekod.
+
+Semua nilai dikira daripada rekod yang kau masukkan sendiri — bukan bacaan meter hidup.
+
+### Edit rekod
+
+Setiap rekod boleh dibetulkan bila-bila masa:
+
+1. Buka **Sejarah** (atau kad servis pada dashboard).
+2. Tekan rekod yang nak diubah.
+3. Tekan **Edit**.
+4. Betulkan apa-apa medan — tarikh, odometer, jenama, produk, harga, liter, stesen, nota — kemudian **Simpan perubahan**.
+
+Untuk rekod servis, kau juga boleh tambah, buang atau tukar item dalam lawatan yang sama. Untuk kenderaan, buka **Tetapan → Kenderaan → Edit**.
+
 ## 5. Sandaran data
 
 **Tetapan → Eksport JSON** memuat turun semua data. Simpan fail itu dari semasa ke semasa.
@@ -165,7 +187,7 @@ Untuk pulih: **Import JSON** (mod demo) atau masukkan semula melalui D1 console 
 
 ## 7. Had versi ini
 
-- Satu pengguna sahaja (satu PIN). Tiada pendaftaran.
+- Satu pengguna sahaja (satu PIN atau kata laluan). Tiada pendaftaran.
 - Tiada lampiran gambar resit.
 - Tiada notifikasi automatik (email/WhatsApp). Status due hanya dilihat bila buka laman.
 - Tiada mod offline (memerlukan internet).

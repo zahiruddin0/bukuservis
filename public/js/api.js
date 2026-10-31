@@ -329,6 +329,32 @@
             notes: ''
           }))
         });
+      } else if (action === 'update') {
+        const x = db.visits.find((v) => v.id === Number(data.id));
+        if (!x) throw new Error('Rekod servis tidak dijumpai');
+        const items = (data.items || []).filter((i) => Number(i.service_type_id) > 0 || String(i.custom_name || '').trim());
+        if (!items.length) throw new Error('Tambah sekurang-kurangnya satu item servis');
+        Object.assign(x, {
+          vehicle_id: Number(data.vehicle_id),
+          date: data.date,
+          odometer: num(data.odometer),
+          workshop: String(data.workshop || '').trim(),
+          extra_cost: num(data.extra_cost),
+          notes: String(data.notes || '').trim(),
+          items: items.map((it, ix) => ({
+            id: x.id * 100 + ix + 1,
+            service_type_id: Number(it.service_type_id) > 0 ? Number(it.service_type_id) : null,
+            custom_name: String(it.custom_name || '').trim(),
+            brand: String(it.brand || '').trim(),
+            product: String(it.product || '').trim(),
+            kind: String(it.kind || '').trim(),
+            qty: num(it.qty) || 1,
+            price: num(it.price),
+            next_due_km: it.next_due_km ? Number(it.next_due_km) : null,
+            next_due_date: it.next_due_date || null,
+            notes: ''
+          }))
+        });
       } else if (action === 'delete') {
         db.visits = db.visits.filter((x) => x.id !== Number(data.id));
       }
@@ -349,6 +375,20 @@
           full_tank: data.full_tank ? 1 : 0,
           notes: String(data.notes || '').trim()
         });
+      } else if (action === 'update') {
+        const x = db.fuel_logs.find((f) => f.id === Number(data.id));
+        if (!x) throw new Error('Rekod minyak tidak dijumpai');
+        Object.assign(x, {
+          vehicle_id: Number(data.vehicle_id),
+          date: data.date,
+          odometer: num(data.odometer),
+          liters: num(data.liters),
+          total_cost: num(data.total_cost),
+          fuel_type: String(data.fuel_type || 'RON95'),
+          station: String(data.station || ''),
+          full_tank: data.full_tank ? 1 : 0,
+          notes: String(data.notes || '').trim()
+        });
       } else if (action === 'delete') {
         db.fuel_logs = db.fuel_logs.filter((x) => x.id !== Number(data.id));
       }
@@ -359,6 +399,15 @@
       if (action === 'create') {
         db.readings.push({
           id: nextId(db.readings),
+          vehicle_id: Number(data.vehicle_id),
+          date: data.date,
+          odometer: num(data.odometer),
+          notes: String(data.notes || '').trim()
+        });
+      } else if (action === 'update') {
+        const x = db.readings.find((r) => r.id === Number(data.id));
+        if (!x) throw new Error('Bacaan tidak dijumpai');
+        Object.assign(x, {
           vehicle_id: Number(data.vehicle_id),
           date: data.date,
           odometer: num(data.odometer),

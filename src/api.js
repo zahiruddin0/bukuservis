@@ -264,6 +264,50 @@ async function mutate(env, body) {
       return;
     }
 
+    if (action === 'update') {
+      const id = Number(data.id);
+      if (!id) throw new Error('Rekod servis tidak dijumpai.');
+
+      const items = (data.items || []).filter((i) => Number(i.service_type_id) > 0 || str(i.custom_name));
+      if (!items.length) throw new Error('Tambah sekurang-kurangnya satu item servis.');
+
+      const stmts = [
+        db.prepare(
+          'UPDATE visits SET vehicle_id = ?, date = ?, odometer = ?, workshop = ?, extra_cost = ?, notes = ? WHERE id = ?'
+        ).bind(
+          Number(data.vehicle_id),
+          str(data.date, 10),
+          num(data.odometer),
+          str(data.workshop, 80),
+          num(data.extra_cost),
+          str(data.notes, 500),
+          id
+        ),
+        db.prepare('DELETE FROM visit_items WHERE visit_id = ?').bind(id)
+      ];
+
+      items.forEach((i) => {
+        stmts.push(db.prepare(
+          'INSERT INTO visit_items (visit_id, service_type_id, custom_name, brand, product, kind, qty, price, next_due_km, next_due_date, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+        ).bind(
+          id,
+          Number(i.service_type_id) > 0 ? Number(i.service_type_id) : null,
+          str(i.custom_name, 80),
+          str(i.brand, 60),
+          str(i.product, 80),
+          str(i.kind, 40),
+          num(i.qty) || 1,
+          num(i.price),
+          i.next_due_km ? Number(i.next_due_km) : null,
+          i.next_due_date ? str(i.next_due_date, 10) : null,
+          str(i.notes, 300)
+        ));
+      });
+
+      await db.batch(stmts);
+      return;
+    }
+
     if (action === 'delete') {
       const id = Number(data.id);
       await db.batch([
@@ -292,6 +336,26 @@ async function mutate(env, body) {
       return;
     }
 
+    if (action === 'update') {
+      const id = Number(data.id);
+      if (!id) throw new Error('Rekod minyak tidak dijumpai.');
+      await db.prepare(
+        'UPDATE fuel_logs SET vehicle_id = ?, date = ?, odometer = ?, liters = ?, total_cost = ?, fuel_type = ?, station = ?, full_tank = ?, notes = ? WHERE id = ?'
+      ).bind(
+        Number(data.vehicle_id),
+        str(data.date, 10),
+        num(data.odometer),
+        num(data.liters),
+        num(data.total_cost),
+        str(data.fuel_type, 20),
+        str(data.station, 30),
+        data.full_tank ? 1 : 0,
+        str(data.notes, 300),
+        id
+      ).run();
+      return;
+    }
+
     if (action === 'delete') {
       await db.prepare('DELETE FROM fuel_logs WHERE id = ?').bind(Number(data.id)).run();
       return;
@@ -307,6 +371,21 @@ async function mutate(env, body) {
         str(data.date, 10),
         num(data.odometer),
         str(data.notes, 300)
+      ).run();
+      return;
+    }
+
+    if (action === 'update') {
+      const id = Number(data.id);
+      if (!id) throw new Error('Bacaan tidak dijumpai.');
+      await db.prepare(
+        'UPDATE readings SET vehicle_id = ?, date = ?, odometer = ?, notes = ? WHERE id = ?'
+      ).bind(
+        Number(data.vehicle_id),
+        str(data.date, 10),
+        num(data.odometer),
+        str(data.notes, 300),
+        id
       ).run();
       return;
     }

@@ -300,11 +300,11 @@
 
       <section class="hero card">
         <div class="hero-top">
-          <div>
+          <button class="odo-btn" data-act="odo-history" type="button" title="Lihat sejarah mileage">
             <div class="muted small">${esc(v.make || '')} ${esc(v.model || '')} ${v.plate ? '· ' + esc(v.plate) : ''}</div>
             <div class="odo">${nf(odo)}<span> km</span></div>
-            <div class="muted tiny">${info.date ? 'Dikemas kini ' + fmtDate(info.date) : 'Belum ada bacaan odometer'}</div>
-          </div>
+            <div class="muted tiny">${info.date ? 'Dikemas kini ' + fmtDate(info.date) : 'Belum ada bacaan odometer'} · <span class="odo-link">Sejarah mileage →</span></div>
+          </button>
           <button class="btn btn-soft btn-sm" data-act="add-reading" type="button">+ Bacaan</button>
         </div>
         <div class="hero-stats">
@@ -759,9 +759,9 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.2.0</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.0</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
-          <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal.</div>
+          <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
       </section>
     `;
@@ -847,9 +847,16 @@
     ).join('');
   }
 
+  function listOptions(list, current) {
+    const arr = list.slice();
+    if (current && arr.indexOf(current) === -1) arr.unshift(current);
+    return arr.map((x) => `<option ${x === current ? 'selected' : ''}>${esc(x)}</option>`).join('');
+  }
+
   function serviceOptions(selectedId, vehicleType) {
     const isCustom = selectedId === 0 || selectedId === '0';
-    const applies = (t) => !vehicleType || t.applies_to === 'both' || t.applies_to === vehicleType;
+    const selected = stById(selectedId);
+    const applies = (t) => (selected && t.id === selected.id) || !vehicleType || t.applies_to === 'both' || t.applies_to === vehicleType;
     const opt = (t) => `<option value="${t.id}" ${Number(selectedId) === t.id ? 'selected' : ''}>${esc(t.name)}</option>`;
 
     const interval = state.db.service_types.filter((t) => applies(t) && t.track !== 'history');
@@ -861,78 +868,89 @@
       + `<option value="0" ${isCustom ? 'selected' : ''}>+ Item lain (taip sendiri)…</option>`;
   }
 
-  function itemRowHTML(selectedId, vehicleType) {
-    const isCustom = selectedId === 0 || selectedId === '0';
+  function itemRowHTML(selectedId, vehicleType, item) {
+    const it = item || {};
+    const hasItem = !!item;
+    const sel = hasItem
+      ? (it.service_type_id != null ? it.service_type_id : 0)
+      : (selectedId === 0 || selectedId === '0' ? 0 : (selectedId || ''));
+    const isCustom = Number(sel) === 0;
     return `
       <div class="item-row" data-row>
         <div class="item-row-head">
-          <select class="input st-select">${serviceOptions(selectedId, vehicleType)}</select>
+          <select class="input st-select">${serviceOptions(sel, vehicleType)}</select>
           <button class="icon-btn" type="button" data-act="del-row" title="Buang">✕</button>
         </div>
         <div class="custom-wrap" ${isCustom ? '' : 'hidden'}>
-          <input class="input custom-name" placeholder="Nama item (cth: Coverset R25)" autocomplete="off">
+          <input class="input custom-name" value="${esc(it.custom_name || '')}" placeholder="Nama item (cth: Coverset R25)" autocomplete="off">
         </div>
         <div class="grid-2">
-          <input class="input brand" placeholder="Jenama (cth: Shell)" autocomplete="off">
-          <input class="input product" placeholder="Produk / gred (cth: Helix 5W-30)" autocomplete="off">
+          <input class="input brand" value="${esc(it.brand || '')}" placeholder="Jenama (cth: Shell)" autocomplete="off">
+          <input class="input product" value="${esc(it.product || '')}" placeholder="Produk / gred (cth: Helix 5W-30)" autocomplete="off">
         </div>
         <div class="grid-2">
           <select class="input kind">
             <option value="">Jenis</option>
-            ${KINDS.map((k) => `<option>${k}</option>`).join('')}
+            ${KINDS.map((k) => `<option ${it.kind === k ? 'selected' : ''}>${k}</option>`).join('')}
           </select>
-          <input class="input price" type="number" inputmode="decimal" step="0.01" min="0" placeholder="Harga RM">
+          <input class="input price" type="number" inputmode="decimal" step="0.01" min="0" value="${it.price ? it.price : ''}" placeholder="Harga RM">
         </div>
       </div>`;
   }
 
-  function openVisitForm(preselectId) {
-    const v = currentVehicle();
+  function openVisitForm(preselectId, existing) {
+    const isEdit = !!existing;
+    const v = isEdit ? vehicleById(existing.vehicle_id) : currentVehicle();
     if (!v) return openVehicleForm(null);
 
+    const rows = isEdit && existing.items && existing.items.length
+      ? existing.items.map((i) => itemRowHTML('', v.type, i)).join('')
+      : itemRowHTML(preselectId || '', v.type);
+    const initialTotal = isEdit ? visitTotal(existing) : 0;
+
     sheet({
-      title: 'Rekod servis',
-      submit: 'Simpan servis',
+      title: isEdit ? 'Edit rekod servis' : 'Rekod servis',
+      submit: isEdit ? 'Simpan perubahan' : 'Simpan servis',
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
-          <select class="input" name="vehicle_id" required>${vehicleOptions(v.id)}</select>
+          <select class="input" name="vehicle_id" required>${vehicleOptions(isEdit ? existing.vehicle_id : v.id)}</select>
         </div>
         <div class="grid-2">
           <div class="field">
             <label class="label">Tarikh</label>
-            <input class="input" type="date" name="date" value="${today()}" required>
+            <input class="input" type="date" name="date" value="${isEdit ? esc(existing.date) : today()}" required>
           </div>
           <div class="field">
             <label class="label">Odometer (km)</label>
-            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${currentOdo(v)}" required>
+            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
           </div>
         </div>
         <div class="field">
           <label class="label">Bengkel (pilihan)</label>
-          <input class="input" name="workshop" placeholder="cth: Bengkel Ah Seng" autocomplete="off">
+          <input class="input" name="workshop" value="${esc(existing ? existing.workshop : '')}" placeholder="cth: Bengkel Ah Seng" autocomplete="off">
         </div>
 
         <div class="field">
           <label class="label">Item servis</label>
-          <div id="items-wrap">${itemRowHTML(preselectId || '', v.type)}</div>
+          <div id="items-wrap">${rows}</div>
           <button class="btn btn-ghost btn-sm" type="button" data-act="add-row">+ Tambah item</button>
         </div>
 
         <div class="grid-2">
           <div class="field">
             <label class="label">Kos lain / upah (RM)</label>
-            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="extra_cost" placeholder="0.00">
+            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="extra_cost" value="${existing && num(existing.extra_cost) ? num(existing.extra_cost) : ''}" placeholder="0.00">
           </div>
           <div class="field">
             <label class="label">Jumlah</label>
-            <input class="input" id="visit-total" value="RM 0.00" readonly tabindex="-1">
+            <input class="input" id="visit-total" value="${money(initialTotal)}" readonly tabindex="-1">
           </div>
         </div>
 
         <div class="field">
           <label class="label">Nota (pilihan)</label>
-          <textarea class="input" name="notes" placeholder="cth: bengkel cadang tukar tayar bulan depan"></textarea>
+          <textarea class="input" name="notes" placeholder="cth: bengkel cadang tukar tayar bulan depan">${esc(existing ? existing.notes : '')}</textarea>
         </div>
 
         <div class="note">Tip: tukar jenama minyak? Kekalkan item <b>Minyak Hitam Enjin</b>, cuma tukar medan jenama. Untuk coverset, ekzos atau up-spec, pilih <b>+ Item lain</b> — ia direkod dalam sejarah tanpa menambah senarai perhatian.</div>
@@ -956,7 +974,8 @@
         const odo = num(fd.get('odometer'));
         if (odo <= 0) throw new Error('Masukkan bacaan odometer.');
 
-        const db = await API.mutate('visit', 'create', {
+        const db = await API.mutate('visit', isEdit ? 'update' : 'create', {
+          id: isEdit ? existing.id : undefined,
           vehicle_id: Number(fd.get('vehicle_id')),
           date: fd.get('date'),
           odometer: odo,
@@ -965,7 +984,7 @@
           notes: fd.get('notes'),
           items: items
         });
-        afterMutate(db, 'Servis disimpan');
+        afterMutate(db, isEdit ? 'Rekod servis dikemas kini' : 'Servis disimpan');
       }
     });
 
@@ -1033,53 +1052,54 @@
     });
   }
 
-  function openFuelForm() {
-    const v = currentVehicle();
+  function openFuelForm(existing) {
+    const isEdit = !!existing;
+    const v = isEdit ? vehicleById(existing.vehicle_id) : currentVehicle();
     if (!v) return openVehicleForm(null);
 
     sheet({
-      title: 'Isi minyak',
-      submit: 'Simpan isi minyak',
+      title: isEdit ? 'Edit isi minyak' : 'Isi minyak',
+      submit: isEdit ? 'Simpan perubahan' : 'Simpan isi minyak',
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
-          <select class="input" name="vehicle_id" required>${vehicleOptions(v.id)}</select>
+          <select class="input" name="vehicle_id" required>${vehicleOptions(isEdit ? existing.vehicle_id : v.id)}</select>
         </div>
         <div class="grid-2">
           <div class="field">
             <label class="label">Tarikh</label>
-            <input class="input" type="date" name="date" value="${today()}" required>
+            <input class="input" type="date" name="date" value="${isEdit ? esc(existing.date) : today()}" required>
           </div>
           <div class="field">
             <label class="label">Odometer (km)</label>
-            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${currentOdo(v)}" required>
+            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
           </div>
         </div>
         <div class="grid-2">
           <div class="field">
             <label class="label">Liter</label>
-            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="liters" placeholder="0.00" required>
+            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="liters" value="${existing && num(existing.liters) ? num(existing.liters) : ''}" placeholder="0.00" required>
           </div>
           <div class="field">
             <label class="label">Jumlah (RM)</label>
-            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="total_cost" placeholder="0.00" required>
+            <input class="input" type="number" inputmode="decimal" step="0.01" min="0" name="total_cost" value="${existing && num(existing.total_cost) ? num(existing.total_cost) : ''}" placeholder="0.00" required>
           </div>
         </div>
         <div class="grid-2">
           <div class="field">
             <label class="label">Jenis minyak</label>
-            <select class="input" name="fuel_type">${FUEL_TYPES.map((f) => `<option>${f}</option>`).join('')}</select>
+            <select class="input" name="fuel_type">${listOptions(FUEL_TYPES, existing ? existing.fuel_type : FUEL_TYPES[0])}</select>
           </div>
           <div class="field">
             <label class="label">Stesen</label>
-            <select class="input" name="station">${STATIONS.map((s) => `<option>${s}</option>`).join('')}</select>
+            <select class="input" name="station">${listOptions(STATIONS, existing ? existing.station : STATIONS[0])}</select>
           </div>
         </div>
-        <label class="check"><input type="checkbox" name="full_tank" checked> Isi penuh (tank penuh)</label>
+        <label class="check"><input type="checkbox" name="full_tank" ${existing ? (num(existing.full_tank) ? 'checked' : '') : 'checked'}> Isi penuh (tank penuh)</label>
         <div class="note" id="fuel-hint">Isi penuh diperlukan untuk kiraan km/L yang tepat.</div>
         <div class="field" style="margin-top:12px">
           <label class="label">Nota (pilihan)</label>
-          <input class="input" name="notes" placeholder="cth: perjalanan KL–Penang">
+          <input class="input" name="notes" value="${esc(existing ? existing.notes : '')}" placeholder="cth: perjalanan KL–Penang">
         </div>
       `,
       onSubmit: async (form) => {
@@ -1090,7 +1110,8 @@
         if (liters <= 0) throw new Error('Masukkan jumlah liter.');
         if (odo <= 0) throw new Error('Masukkan bacaan odometer.');
 
-        const db = await API.mutate('fuel', 'create', {
+        const db = await API.mutate('fuel', isEdit ? 'update' : 'create', {
+          id: isEdit ? existing.id : undefined,
           vehicle_id: Number(fd.get('vehicle_id')),
           date: fd.get('date'),
           odometer: odo,
@@ -1101,49 +1122,51 @@
           full_tank: fd.get('full_tank') ? 1 : 0,
           notes: fd.get('notes')
         });
-        afterMutate(db, 'Isi minyak disimpan');
+        afterMutate(db, isEdit ? 'Rekod minyak dikemas kini' : 'Isi minyak disimpan');
       }
     });
   }
 
-  function openReadingForm() {
-    const v = currentVehicle();
+  function openReadingForm(existing) {
+    const isEdit = !!existing;
+    const v = isEdit ? vehicleById(existing.vehicle_id) : currentVehicle();
     if (!v) return openVehicleForm(null);
 
     sheet({
-      title: 'Bacaan odometer',
-      submit: 'Simpan bacaan',
+      title: isEdit ? 'Edit bacaan odometer' : 'Bacaan odometer',
+      submit: isEdit ? 'Simpan perubahan' : 'Simpan bacaan',
       body: `
         <div class="field">
           <label class="label">Kenderaan</label>
-          <select class="input" name="vehicle_id" required>${vehicleOptions(v.id)}</select>
+          <select class="input" name="vehicle_id" required>${vehicleOptions(isEdit ? existing.vehicle_id : v.id)}</select>
         </div>
         <div class="grid-2">
           <div class="field">
             <label class="label">Tarikh</label>
-            <input class="input" type="date" name="date" value="${today()}" required>
+            <input class="input" type="date" name="date" value="${isEdit ? esc(existing.date) : today()}" required>
           </div>
           <div class="field">
             <label class="label">Odometer (km)</label>
-            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${currentOdo(v)}" required>
+            <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
           </div>
         </div>
         <div class="field">
           <label class="label">Nota (pilihan)</label>
-          <input class="input" name="notes" placeholder="cth: hantar servis">
+          <input class="input" name="notes" value="${esc(existing ? existing.notes : '')}" placeholder="cth: hantar servis">
         </div>
       `,
       onSubmit: async (form) => {
         const fd = new FormData(form);
         const odo = num(fd.get('odometer'));
         if (odo <= 0) throw new Error('Masukkan bacaan odometer.');
-        const db = await API.mutate('reading', 'create', {
+        const db = await API.mutate('reading', isEdit ? 'update' : 'create', {
+          id: isEdit ? existing.id : undefined,
           vehicle_id: Number(fd.get('vehicle_id')),
           date: fd.get('date'),
           odometer: odo,
           notes: fd.get('notes')
         });
-        afterMutate(db, 'Bacaan disimpan');
+        afterMutate(db, isEdit ? 'Bacaan dikemas kini' : 'Bacaan disimpan');
       }
     });
   }
@@ -1328,6 +1351,7 @@
         <div class="sheet-foot">
           <button class="btn btn-danger" type="button" data-act="del-visit" data-id="${x.id}">Buang rekod</button>
           <button class="btn btn-ghost" type="button" data-close>Tutup</button>
+          <button class="btn btn-primary" type="button" data-act="edit-visit" data-id="${x.id}">Edit</button>
         </div>
       `
     });
@@ -1358,6 +1382,7 @@
         <div class="sheet-foot">
           <button class="btn btn-danger" type="button" data-act="del-fuel" data-id="${x.id}">Buang rekod</button>
           <button class="btn btn-ghost" type="button" data-close>Tutup</button>
+          <button class="btn btn-primary" type="button" data-act="edit-fuel" data-id="${x.id}">Edit</button>
         </div>
       `
     });
@@ -1379,6 +1404,116 @@
         <div class="sheet-foot">
           <button class="btn btn-danger" type="button" data-act="del-reading" data-id="${x.id}">Buang rekod</button>
           <button class="btn btn-ghost" type="button" data-close>Tutup</button>
+          <button class="btn btn-primary" type="button" data-act="edit-reading" data-id="${x.id}">Edit</button>
+        </div>
+      `
+    });
+  }
+
+  /* ---------------- sejarah mileage ---------------- */
+  function odoPoints(v) {
+    const pts = [];
+    state.db.visits.forEach((x) => {
+      if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
+      const names = (x.items || []).map(itemName);
+      pts.push({ date: x.date, odo: num(x.odometer), kind: 'visit', label: names.join(' + ') || 'Servis' });
+    });
+    state.db.fuel_logs.forEach((x) => {
+      if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
+      pts.push({ date: x.date, odo: num(x.odometer), kind: 'fuel', label: 'Isi minyak ' + num(x.liters).toFixed(2) + ' L' });
+    });
+    state.db.readings.forEach((x) => {
+      if (x.vehicle_id !== v.id || num(x.odometer) <= 0) return;
+      pts.push({ date: x.date, odo: num(x.odometer), kind: 'reading', label: String(x.notes || '').trim() || 'Bacaan manual' });
+    });
+    pts.sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.odo - b.odo);
+    return pts;
+  }
+
+  function odoAt(pts, iso, base) {
+    let best = null;
+    pts.forEach((p) => {
+      if (String(p.date) > iso) return;
+      if (!best || p.odo > best.odo || (p.odo === best.odo && p.date > best.date)) best = p;
+    });
+    if (best) return best;
+    return base > 0 ? { date: null, odo: base, kind: 'base', label: 'Odometer asas' } : null;
+  }
+
+  function openOdoHistory() {
+    const v = currentVehicle();
+    if (!v) return openVehicleForm(null);
+
+    const pts = odoPoints(v);
+    const base = num(v.odometer_base);
+    const odoNow = currentOdo(v);
+
+    const milestones = [
+      ['7 hari lepas', 7],
+      ['30 hari lepas', 30],
+      ['3 bulan lepas', 90],
+      ['6 bulan lepas', 180],
+      ['1 tahun lepas', 365]
+    ];
+
+    const milestoneHTML = milestones.map((m) => {
+      const iso = daysAgoISO(m[1]);
+      const p = odoAt(pts, iso, base);
+      const sub = p
+        ? (p.kind === 'base' ? 'anggaran dari odometer asas' : 'rekod ' + fmtDate(p.date))
+        : 'tiada rekod lagi';
+      return `
+        <div class="kv">
+          <span class="k">${m[0]}<br><span class="muted tiny">${fmtDate(iso)}</span></span>
+          <span class="v">${p ? nf(p.odo) + ' km' : '—'}<br><span class="muted tiny">${sub}</span></span>
+        </div>`;
+    }).join('');
+
+    let timeline = '';
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      const prev = i > 0 ? pts[i - 1] : null;
+      const delta = prev ? p.odo - prev.odo : null;
+      const kindText = p.kind === 'visit' ? 'Servis' : p.kind === 'fuel' ? 'Isi minyak' : 'Bacaan';
+      const deltaText = delta != null ? ' · ' + (delta < 0 ? '−' : '+') + nf(Math.abs(delta)) + ' km' : '';
+      timeline += `
+        <div class="kv">
+          <span class="k">${fmtDate(p.date)} · ${esc(p.label)}<br><span class="muted tiny">${kindText}${deltaText}</span></span>
+          <span class="v">${nf(p.odo)} km</span>
+        </div>`;
+    }
+
+    if (base > 0) {
+      timeline += `
+        <div class="kv">
+          <span class="k">Odometer asas<br><span class="muted tiny">nilai permulaan</span></span>
+          <span class="v">${nf(base)} km</span>
+        </div>`;
+    }
+
+    sheet({
+      title: 'Sejarah mileage',
+      submit: false,
+      body: `
+        <div class="kv"><span class="k">Kenderaan</span><span class="v">${esc(v.name)}</span></div>
+        <div class="kv"><span class="k">Odometer semasa</span><span class="v">${nf(odoNow)} km</span></div>
+        <div class="kv"><span class="k">Jarak direkod</span><span class="v">${pts.length > 1 ? nf(pts[pts.length - 1].odo - pts[0].odo) + ' km' : '—'}</span></div>
+
+        <div class="section" style="margin:18px 0 0">
+          <h2 class="section-title">Mileage pada tarikh</h2>
+          ${milestoneHTML}
+        </div>
+
+        <div class="section" style="margin:18px 0 0">
+          <h2 class="section-title">Semua bacaan <span class="count">${pts.length}</span></h2>
+          ${timeline || `<div class="note">Belum ada rekod mileage. Tambah bacaan pertama untuk mula.</div>`}
+        </div>
+
+        <div class="note">Nilai ini dikira daripada rekod yang kau masukkan, bukan bacaan meter hidup. Jika tiada rekod pada tarikh itu, sistem guna rekod terakhir sebelum tarikh tersebut.</div>
+
+        <div class="sheet-foot">
+          <button class="btn btn-ghost" type="button" data-close>Tutup</button>
+          <button class="btn btn-primary" type="button" data-act="add-reading">+ Bacaan baru</button>
         </div>
       `
     });
@@ -1443,6 +1578,9 @@
           </button>
           <button class="due-row" type="button" data-act="add-reading">
             <div class="due-main"><div class="due-name">📍 Bacaan odometer</div><div class="due-sub">Kemas kini mileage tanpa servis</div></div>
+          </button>
+          <button class="due-row" type="button" data-act="odo-history">
+            <div class="due-main"><div class="due-name">📈 Sejarah mileage</div><div class="due-sub">Lihat bacaan pada hari, minggu atau bulan lepas</div></div>
           </button>
         </div>
         <div class="note">Semua rekod akan disimpan pada kenderaan yang sedang dipilih.</div>
@@ -1515,6 +1653,28 @@
       if (act === 'add-reading') { closeSheet(); setTimeout(openReadingForm, 60); return; }
       if (act === 'add-vehicle') { openVehicleForm(null); return; }
       if (act === 'edit-vehicle') { openVehicleForm(vehicleById(el.dataset.id)); return; }
+      if (act === 'odo-history') { closeSheet(); setTimeout(openOdoHistory, 60); return; }
+      if (act === 'edit-visit') {
+        const x = state.db.visits.find((v) => v.id === Number(el.dataset.id));
+        if (!x) return;
+        closeSheet();
+        setTimeout(() => openVisitForm('', x), 60);
+        return;
+      }
+      if (act === 'edit-fuel') {
+        const x = state.db.fuel_logs.find((f) => f.id === Number(el.dataset.id));
+        if (!x) return;
+        closeSheet();
+        setTimeout(() => openFuelForm(x), 60);
+        return;
+      }
+      if (act === 'edit-reading') {
+        const x = state.db.readings.find((r) => r.id === Number(el.dataset.id));
+        if (!x) return;
+        closeSheet();
+        setTimeout(() => openReadingForm(x), 60);
+        return;
+      }
       if (act === 'add-st') { openServiceTypeForm(null); return; }
       if (act === 'edit-st') { closeSheet(); setTimeout(() => openServiceTypeForm(stById(el.dataset.id)), 60); return; }
       if (act === 'service-detail') { openServiceDetail(Number(el.dataset.id)); return; }
@@ -1597,12 +1757,12 @@
       <div class="login">
         <div class="brand-mark">BS</div>
         <h1>BukuServis</h1>
-        <p>Masukkan PIN untuk buka buku servis kau.</p>
+        <p>Masukkan PIN atau kata laluan untuk buka buku servis kau.</p>
         <div class="card">
           <form id="login-form">
             <div class="field">
-              <label class="label">PIN</label>
-              <input class="input" type="password" name="pin" inputmode="numeric" autocomplete="current-password" placeholder="••••" required>
+              <label class="label">PIN / kata laluan</label>
+              <input class="input" type="password" name="pin" autocomplete="current-password" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Huruf dan nombor" required>
             </div>
             <button class="btn btn-primary btn-block" type="submit">Buka</button>
           </form>
