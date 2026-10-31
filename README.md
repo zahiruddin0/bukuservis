@@ -87,8 +87,10 @@ wrangler d1 execute bukuservis --remote --file=./schema.sql
 
 1. Dashboard → **Storage & Databases** → **D1 SQL Database** → **Create** → nama `bukuservis`.
 2. Buka database itu → tab **Console**.
-3. Copy seluruh kandungan `schema.sql`, tampal dalam console, klik **Run**.
-4. Database ID boleh dilihat pada halaman database (untuk rujukan).
+3. Copy seluruh kandungan **`schema-d1-console.sql`** (bukan `schema.sql`), tampal dalam console, klik **Run**.
+   - Versi ini tiada komen `--` sebab console D1 menghilangkan newline semasa paste; komen akan menelan seluruh skrip dan keluar "No SQL statements detected".
+4. Semak dengan `/tables` — patut ada 6 jadual. `SELECT COUNT(*) FROM service_types;` patut pulang **36**.
+5. Database ID boleh dilihat pada halaman database (untuk rujukan).
 
 ### 2.3 Sambung repo ke Cloudflare Pages
 
