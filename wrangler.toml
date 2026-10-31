@@ -15,14 +15,13 @@ binding = "ASSETS"
 # dashboard akan DIPADAM. Itulah punca ralat
 # "Cannot read properties of undefined (reading 'prepare')".
 #
-# Isi database_id sebenar di bawah dan buka komen. Dapatkan ID dari:
-#   Cloudflare dashboard → Storage & Databases → D1 → bukuservis
-#   (ruang "Database ID"), atau jalankan: npx wrangler d1 list
+# Database ID di bawah sudah diisi untuk database `bukuservis`. Kalau kau
+# cipta database baharu, tukar ID di sini (dashboard → D1 → Database ID).
 #
-# [[d1_databases]]
-# binding = "DB"
-# database_name = "bukuservis"
-# database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+[[d1_databases]]
+binding = "DB"
+database_name = "bukuservis"
+database_id = "05a16fe3-d8c0-420a-b602-9c11f8a25267"
 # ------------------------------------------------------------------
 
 # Jangan padam pemboleh ubah teks yang ditetapkan di dashboard.

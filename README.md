@@ -91,7 +91,7 @@ binding yang tiada dalam fail konfigurasi. Itulah punca ralat
 `Cannot read properties of undefined (reading 'prepare')`.
 
 1. Buka dashboard → **Storage & Databases** → **D1** → `bukuservis` → copy **Database ID**
-2. Buka komen blok `[[d1_databases]]` dalam `wrangler.toml` dan isi `database_id`
+2. `wrangler.toml` sudah mengandungi `database_id` untuk `bukuservis`. Kalau kau cipta database baharu, tukar ID di situ.
 3. Commit + push
 
 Bindings di dashboard (pilihan, untuk semakan sahaja):
@@ -120,7 +120,7 @@ Selepas simpan, **Redeploy** (Deployments → ⋯ → Retry deployment) supaya b
 Semak status binding pada Worker yang sedang berjalan:
 
 ```text
-https://bukuservis.<subdomain>.workers.dev/api/health
+https://bukuservis-zahir.zahiruddin.workers.dev/api/health
 ```
 
 `{"ok":true,"db":true,"pin":true,"secret":true,"assets":true}` bermakna semua binding aktif.
@@ -128,7 +128,7 @@ Jika `"db":false`, binding D1 tiada — ulang langkah di atas.
 
 ### 3.5 Buka
 
-`https://bukuservis.<subdomain>.workers.dev` → masukkan PIN → tambah kenderaan pertama.
+`https://bukuservis-zahir.zahiruddin.workers.dev` → masukkan PIN → tambah kenderaan pertama.
 
 Boleh tambah domain sendiri melalui **Settings → Domains & Routes**.
 
