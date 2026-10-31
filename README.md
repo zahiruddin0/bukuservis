@@ -202,10 +202,10 @@ Untuk pulih: **Import JSON** (mod demo) atau masukkan semula melalui D1 console 
 
 ## 6. Nota teknikal
 
-- Odometer semasa = bacaan tertinggi antara rekod servis, fuel log, bacaan manual dan `odometer_base`.
+- Odometer semasa = bacaan pada rekod **terbaru mengikut tarikh** (servis, fuel log atau bacaan manual), bukan odometer tertinggi. Jadi kalau kau betulkan rekod lama atau masukkan bacaan lebih rendah pada tarikh baharu, nilai itu yang dipakai. `odometer_base` hanya digunakan jika tiada rekod langsung.
 - Setiap item servis ada `track`: `interval` (ada due) atau `history` (rekod sahaja). Item `history` tidak masuk senarai perhatian tetapi masih dalam sejarah dan laporan.
-- `visit_items.service_type_id` boleh `NULL`; jika begitu, nama item diambil dari `custom_name` (item taip sendiri).
-- Due dikira dari rekod servis terakhir item itu: `odometer + interval_km` dan/atau `tarikh + interval_bulan`. Yang sampai dahulu menentukan status.
+- `visit_items.service_type_id` boleh `NULL`; jika begitu, nama item diambil dari `custom_name` (item taip sendiri). Jika nama yang ditaip sama tepat dengan nama item katalog, sistem mengaitkannya secara automatik supaya due item itu turut dikemas kini.
+- Due dikira dari rekod servis **terakhir** item itu (tarikh paling baru; jika sama tarikh, odometer lebih tinggi): `odometer + interval_km` dan/atau `tarikh + interval_bulan`. Yang sampai dahulu menentukan status. Jadi setiap kali kau simpan rekod servis baharu, kad item itu terus menunjukkan mileage dan tarikh due yang baharu.
 - Setiap item servis boleh override due (kolum `next_due_km`, `next_due_date`) — belum ada di UI, boleh tambah kemudian.
 - km/L = jarak antara dua isi penuh ÷ liter isi kedua. Hanya pasangan yang kedua-duanya `full_tank = 1` dikira.
 - Cookie session: HMAC-SHA256, sah 30 hari, `HttpOnly`, `SameSite=Lax`, `Secure` pada HTTPS.

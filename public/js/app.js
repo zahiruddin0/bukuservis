@@ -92,6 +92,22 @@
 
   function currentOdo(v) {
     if (!v) return 0;
+    // Guna rekod terbaru mengikut tarikh (bukan odometer tertinggi) supaya
+    // pembetulan/entri baharu pada odometer lebih rendah tetap diambil kira.
+    let best = { odo: num(v.odometer_base), date: '' };
+    const consider = (odo, date) => {
+      const n = num(odo);
+      if (n <= 0) return;
+      const d = String(date || '');
+      if (!best.date || d > best.date || (d === best.date && n > best.odo)) best = { odo: n, date: d };
+    };
+    state.db.visits.forEach((x) => { if (x.vehicle_id === v.id) consider(x.odometer, x.date); });
+    state.db.fuel_logs.forEach((x) => { if (x.vehicle_id === v.id) consider(x.odometer, x.date); });
+    state.db.readings.forEach((x) => { if (x.vehicle_id === v.id) consider(x.odometer, x.date); });
+    return best.odo;
+  }
+
+  function highestOdo(v) {
     let max = num(v.odometer_base);
     state.db.visits.forEach((x) => { if (x.vehicle_id === v.id) max = Math.max(max, num(x.odometer)); });
     state.db.fuel_logs.forEach((x) => { if (x.vehicle_id === v.id) max = Math.max(max, num(x.odometer)); });
@@ -103,7 +119,9 @@
     let best = { odo: num(v.odometer_base), date: null };
     const consider = (odo, date) => {
       const n = num(odo);
-      if (n > best.odo || (n === best.odo && date && (!best.date || date > best.date))) best = { odo: n, date: date };
+      const d = date ? String(date) : '';
+      if (n <= 0 || !d) return;
+      if (!best.date || d > String(best.date) || (d === String(best.date) && n > best.odo)) best = { odo: n, date: d };
     };
     state.db.visits.forEach((x) => { if (x.vehicle_id === v.id) consider(x.odometer, x.date); });
     state.db.fuel_logs.forEach((x) => { if (x.vehicle_id === v.id) consider(x.odometer, x.date); });
@@ -134,8 +152,8 @@
       if (x.vehicle_id !== v.id) return;
       const it = (x.items || []).find((i) => i.service_type_id === t.id);
       if (!it) return;
-      if (!last || num(x.odometer) > num(last.visit.odometer) ||
-          (num(x.odometer) === num(last.visit.odometer) && String(x.date) > String(last.visit.date))) {
+      if (!last || String(x.date) > String(last.visit.date) ||
+          (String(x.date) === String(last.visit.date) && num(x.odometer) > num(last.visit.odometer))) {
         last = { visit: x, item: it };
       }
     });
@@ -762,7 +780,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.4</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.5</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -928,6 +946,7 @@
           <div class="field">
             <label class="label">Odometer (km)</label>
             <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
+            <div class="tiny muted" style="margin-top:4px">Rekod tertinggi setakat ini: ${nf(highestOdo(v))} km</div>
           </div>
         </div>
         <div class="field">
@@ -962,9 +981,17 @@
       onSubmit: async (form) => {
         const items = $$('.item-row', form).map((row) => {
           const stVal = Number($('.st-select', row).value);
+          let custom = stVal === 0 ? String($('.custom-name', row).value || '').trim() : '';
+          let stId = stVal;
+          // Jika nama yang ditaip sama dengan item katalog, kaitkan automatik
+          // supaya due/peringatan item itu turut dikemas kini.
+          if (stVal === 0 && custom) {
+            const match = state.db.service_types.find((t) => t.name.trim().toLowerCase() === custom.toLowerCase());
+            if (match) { stId = match.id; custom = ''; }
+          }
           return {
-            service_type_id: stVal,
-            custom_name: stVal === 0 ? $('.custom-name', row).value : '',
+            service_type_id: stId,
+            custom_name: custom,
             brand: $('.brand', row).value,
             product: $('.product', row).value,
             kind: $('.kind', row).value,
@@ -1086,6 +1113,7 @@
           <div class="field">
             <label class="label">Odometer (km)</label>
             <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
+            <div class="tiny muted" style="margin-top:4px">Rekod tertinggi setakat ini: ${nf(highestOdo(v))} km</div>
           </div>
         </div>
         <div class="grid-2">
@@ -1170,6 +1198,7 @@
           <div class="field">
             <label class="label">Odometer (km)</label>
             <input class="input" type="number" inputmode="numeric" name="odometer" min="0" value="${isEdit ? num(existing.odometer) : currentOdo(v)}" required>
+            <div class="tiny muted" style="margin-top:4px">Rekod tertinggi setakat ini: ${nf(highestOdo(v))} km</div>
           </div>
         </div>
         <div class="field">
@@ -1548,7 +1577,7 @@
       body: `
         <div class="kv"><span class="k">Kenderaan</span><span class="v">${esc(v.name)}</span></div>
         <div class="kv"><span class="k">Odometer semasa</span><span class="v">${nf(odoNow)} km</span></div>
-        <div class="kv"><span class="k">Jarak direkod</span><span class="v">${pts.length > 1 ? nf(pts[pts.length - 1].odo - pts[0].odo) + ' km' : '—'}</span></div>
+        <div class="kv"><span class="k">Jarak direkod</span><span class="v">${pts.length > 1 ? nf(Math.max(...pts.map((p) => p.odo)) - Math.min(...pts.map((p) => p.odo))) + ' km' : '—'}</span></div>
 
         <div class="section" style="margin:18px 0 0">
           <h2 class="section-title">Mileage pada tarikh</h2>
@@ -1582,7 +1611,7 @@
         if (i.service_type_id === t.id) records.push({ visit: x, item: i });
       });
     });
-    records.sort((a, b) => num(b.visit.odometer) - num(a.visit.odometer));
+    records.sort((a, b) => String(b.visit.date).localeCompare(String(a.visit.date)) || num(b.visit.odometer) - num(a.visit.odometer));
 
     const due = dueFor(v, t);
 
@@ -1592,6 +1621,7 @@
       body: `
         <div class="kv"><span class="k">Kenderaan</span><span class="v">${esc(v.name)}</span></div>
         <div class="kv"><span class="k">Interval</span><span class="v">${intervalText(t)}</span></div>
+        ${due.last ? `<div class="kv"><span class="k">Servis terakhir</span><span class="v">${fmtDate(due.last.visit.date)} · ${kmText(due.last.visit.odometer)}</span></div>` : ''}
         <div class="kv"><span class="k">Status</span><span class="v">${due.status === 'none' ? 'Tiada rekod' : dueLabel(due)}</span></div>
         ${due.dueKm != null ? `<div class="kv"><span class="k">Due pada</span><span class="v">${kmText(due.dueKm)}</span></div>` : ''}
         ${due.dueDate ? `<div class="kv"><span class="k">Due tarikh</span><span class="v">${fmtDate(due.dueDate)}</span></div>` : ''}
