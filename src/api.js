@@ -19,6 +19,17 @@ export async function onRequest(context) {
     if (path === '/login' && request.method === 'POST') return await handleLogin(request, env, url);
     if (path === '/logout' && request.method === 'POST') return handleLogout(url);
 
+    // Diagnostik ringkas: hanya status binding, bukan nilai rahsia.
+    if (path === '/health' && request.method === 'GET') {
+      return json({
+        ok: true,
+        db: !!(env && env.DB && typeof env.DB.prepare === 'function'),
+        pin: !!env.APP_PIN,
+        secret: !!env.SESSION_SECRET,
+        assets: !!(env && env.ASSETS)
+      });
+    }
+
     const token = getCookie(request, SESSION_COOKIE);
     const ok = await verifySession(token, env);
     if (!ok) return json({ error: 'Sesi tamat. Sila log masuk semula.' }, 401);
@@ -147,8 +158,19 @@ function nullableNum(v) {
 }
 
 /* ---------------- bootstrap ---------------- */
+function requireDb(env) {
+  const db = env && env.DB;
+  if (!db || typeof db.prepare !== 'function') {
+    throw new Error(
+      'Pangkalan data D1 tidak disambung pada Worker ini (binding "DB" tiada). ' +
+      'Buka Cloudflare → Workers & Pages → bukuservis → Settings → Bindings dan tambah D1 dengan nama pemboleh ubah DB.'
+    );
+  }
+  return db;
+}
+
 async function bootstrap(env) {
-  const db = env.DB;
+  const db = requireDb(env);
 
   const [vehicles, types, visits, items, fuel, readings] = await Promise.all([
     db.prepare('SELECT * FROM vehicles ORDER BY id').all(),
@@ -176,7 +198,7 @@ async function bootstrap(env) {
 
 /* ---------------- mutasi ---------------- */
 async function mutate(env, body) {
-  const db = env.DB;
+  const db = requireDb(env);
   const type = body && body.type;
   const action = body && body.action;
   const data = (body && body.data) || {};

@@ -759,7 +759,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.0</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.1</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1788,6 +1788,10 @@
         }
         render();
       } catch (err) {
+        if (err && err.loggedIn) {
+          renderBootError(err.message);
+          return;
+        }
         toast(err.message || 'PIN salah', true);
         btn.disabled = false;
         btn.textContent = 'Buka';
@@ -1841,6 +1845,27 @@
     }, wait);
   }
 
+  function renderBootError(message) {
+    const fab = $('#fab');
+    const tabs = $('.tabbar');
+    if (fab) fab.hidden = true;
+    if (tabs) tabs.style.display = 'none';
+
+    const isBinding = /binding|pangkalan data d1/i.test(String(message || ''));
+    const help = isBinding
+      ? `<a class="btn btn-ghost btn-block" href="https://dash.cloudflare.com/?to=/:account/workers-and-pages" target="_blank" rel="noopener">Buka dashboard Cloudflare</a>`
+      : '';
+
+    $('#view').innerHTML = `
+      <div class="empty">
+        <div class="big">⚠️</div>
+        <h3>Tidak dapat dimuatkan</h3>
+        <p>${esc(message || 'Ralat tidak diketahui')}</p>
+        <button class="btn btn-primary btn-block" type="button" onclick="location.reload()">Muat semula</button>
+        ${help}
+      </div>`;
+  }
+
   async function boot() {
     const started = Date.now();
     // jangan biar splash tersangkut jika rangkaian lambat
@@ -1885,13 +1910,7 @@
       state.vehicleId = state.db.vehicles.length ? state.db.vehicles[0].id : null;
       render();
     } catch (err) {
-      $('#view').innerHTML = `
-        <div class="empty">
-          <div class="big">⚠️</div>
-          <h3>Tidak dapat dimuatkan</h3>
-          <p>${esc(err && err.message ? err.message : 'Ralat tidak diketahui')}</p>
-          <button class="btn btn-primary" type="button" onclick="location.reload()">Muat semula</button>
-        </div>`;
+      renderBootError(err && err.message ? err.message : 'Ralat tidak diketahui');
     } finally {
       hideSplash(started);
     }

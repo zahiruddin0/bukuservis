@@ -675,6 +675,7 @@ table.tbl .strong { font-weight: 700; }
 .empty .big { font-size: 34px; margin-bottom: 8px; }
 .empty h3 { margin: 0 0 6px; font-size: 16px; }
 .empty p { margin: 0 auto 16px; max-width: 320px; color: var(--ink-3); font-size: 13.5px; line-height: 1.55; }
+.empty .btn + .btn { margin-top: 8px; }
 
 .loading { text-align: center; padding: 60px 0; color: var(--ink-3); font-size: 14px; }
 

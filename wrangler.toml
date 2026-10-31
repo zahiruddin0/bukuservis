@@ -8,16 +8,22 @@ directory = "./public"
 binding = "ASSETS"
 
 # ------------------------------------------------------------------
-# Binding D1 untuk production.
-# Cara paling senang: tetapkan di dashboard
-#   Workers & Pages → projek → Settings → Bindings → Add → D1 database
-#   Variable name: DB
+# PENTING — binding D1 MESTI ditulis di sini.
 #
-# Atau isi database_id sebenar di bawah (dapat dari halaman D1) dan
-# buka komen. Jangan biarkan nilai palsu — deploy akan gagal.
+# wrangler.toml ialah sumber utama konfigurasi. Setiap kali `wrangler deploy`
+# (termasuk deploy automatik dari GitHub), binding yang hanya ditambah di
+# dashboard akan DIPADAM. Itulah punca ralat
+# "Cannot read properties of undefined (reading 'prepare')".
+#
+# Isi database_id sebenar di bawah dan buka komen. Dapatkan ID dari:
+#   Cloudflare dashboard → Storage & Databases → D1 → bukuservis
+#   (ruang "Database ID"), atau jalankan: npx wrangler d1 list
 #
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "bukuservis"
 # database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 # ------------------------------------------------------------------
+
+# Jangan padam pemboleh ubah teks yang ditetapkan di dashboard.
+keep_vars = true

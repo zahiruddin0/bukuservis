@@ -480,21 +480,40 @@
     get mode() { return mode; },
 
     async init() {
+      let res;
       try {
-        const res = await fetch('/api/bootstrap', { credentials: 'same-origin' });
-        if (res.status === 401) {
-          mode = 'remote';
-          return { mode, needsLogin: true, db: null };
-        }
-        if (!res.ok) throw new Error('no api');
-        const db = await res.json();
-        if (!db || !Array.isArray(db.vehicles)) throw new Error('payload');
-        mode = 'remote';
-        return { mode, needsLogin: false, db };
+        res = await fetch('/api/bootstrap', { credentials: 'same-origin' });
       } catch (_) {
+        // tiada rangkaian / dibuka sebagai fail tempatan
         mode = 'local';
         return { mode, needsLogin: false, db: loadLocal() };
       }
+
+      if (res.status === 401) {
+        mode = 'remote';
+        return { mode, needsLogin: true, db: null };
+      }
+
+      const ctype = res.headers.get('content-type') || '';
+      const text = await res.text();
+      let data = null;
+      try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
+
+      if (res.ok && data && Array.isArray(data.vehicles)) {
+        mode = 'remote';
+        return { mode, needsLogin: false, db: data };
+      }
+
+      // API sebenar menjawab dengan JSON ralat — jangan sembunyi dalam mod demo.
+      if (data && data.error) throw new Error(data.error);
+
+      // /api tiada langsung (fail statik / hos lain) — baru guna mod demo.
+      if (res.status === 404 || (res.ok && !ctype.includes('application/json'))) {
+        mode = 'local';
+        return { mode, needsLogin: false, db: loadLocal() };
+      }
+
+      throw new Error('Ralat pelayan (' + res.status + ')');
     },
 
     async load() {
@@ -505,7 +524,23 @@
     async login(pin) {
       await http('/login', { method: 'POST', body: JSON.stringify({ pin }) });
       mode = 'remote';
-      return http('/bootstrap');
+
+      // Kadang-kadang cookie belum sempat dihantar pada permintaan pertama.
+      let lastErr = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          return await http('/bootstrap');
+        } catch (err) {
+          lastErr = err;
+          if (attempt < 2) await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+        }
+      }
+
+      const e = new Error(lastErr && lastErr.message
+        ? lastErr.message
+        : 'Data gagal dimuatkan selepas log masuk.');
+      e.loggedIn = true;
+      throw e;
     },
 
     async logout() {

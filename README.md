@@ -85,7 +85,16 @@ git push
 
 ### 3.4 Binding dan secret
 
-Dalam projek Worker → **Settings**:
+**Penting:** binding D1 mesti ditulis dalam `wrangler.toml` (bukan hanya di dashboard).
+Setiap deploy dari GitHub menjalankan `npx wrangler deploy`, dan wrangler memadam
+binding yang tiada dalam fail konfigurasi. Itulah punca ralat
+`Cannot read properties of undefined (reading 'prepare')`.
+
+1. Buka dashboard → **Storage & Databases** → **D1** → `bukuservis` → copy **Database ID**
+2. Buka komen blok `[[d1_databases]]` dalam `wrangler.toml` dan isi `database_id`
+3. Commit + push
+
+Bindings di dashboard (pilihan, untuk semakan sahaja):
 
 **Bindings** → **Add** → **D1 database**
 - Variable name: `DB`
@@ -98,6 +107,8 @@ Dalam projek Worker → **Settings**:
 | `APP_PIN` | PIN atau kata laluan log masuk kau (huruf + nombor dibenarkan, jangan guna PIN bank) |
 | `SESSION_SECRET` | string rawak panjang |
 
+Secret tidak dipadam oleh wrangler, jadi ia selamat.
+
 Jana `SESSION_SECRET`:
 
 ```powershell
@@ -105,6 +116,15 @@ Jana `SESSION_SECRET`:
 ```
 
 Selepas simpan, **Redeploy** (Deployments → ⋯ → Retry deployment) supaya binding aktif.
+
+Semak status binding pada Worker yang sedang berjalan:
+
+```text
+https://bukuservis.<subdomain>.workers.dev/api/health
+```
+
+`{"ok":true,"db":true,"pin":true,"secret":true,"assets":true}` bermakna semua binding aktif.
+Jika `"db":false`, binding D1 tiada — ulang langkah di atas.
 
 ### 3.5 Buka
 
