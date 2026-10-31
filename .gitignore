@@ -1,0 +1,11 @@
+# Node / wrangler
+node_modules/
+.wrangler/
+.dev.vars
+
+# Fail sementara
+*.zip
+worker-check.js
+*.log
+.DS_Store
+Thumbs.db
