@@ -461,17 +461,18 @@
       headers: { 'content-type': 'application/json' }
     }, opts || {}));
 
-    if (res.status === 401) {
-      const e = new Error('Sesi tamat. Sila log masuk semula.');
-      e.code = 401;
-      throw e;
-    }
-
     const text = await res.text();
     let data = null;
     try { data = text ? JSON.parse(text) : null; } catch (_) { data = null; }
 
-    if (!res.ok) throw new Error((data && data.error) || ('Ralat pelayan (' + res.status + ')'));
+    if (!res.ok) {
+      const msg = (data && data.error)
+        || (res.status === 401 ? 'Sesi tamat. Sila log masuk semula.' : 'Ralat pelayan (' + res.status + ')');
+      const e = new Error(msg);
+      e.code = res.status;
+      throw e;
+    }
+
     return data;
   }
 
