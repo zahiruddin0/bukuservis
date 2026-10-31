@@ -759,7 +759,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.1.0</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.2.0</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal.</div>
         </div>

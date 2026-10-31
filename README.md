@@ -1,6 +1,6 @@
 # BukuServis
 
-Rekod servis, mileage dan isi minyak untuk kereta & motosikal. Satu halaman HTML, tiada framework, tiada build step. Data disegerakkan antara peranti melalui Cloudflare D1.
+Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa — tiada framework, tiada build step. Data disegerakkan antara peranti melalui Cloudflare D1.
 
 ## Ciri
 
@@ -18,119 +18,99 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. Satu halaman HTML
 
 ```
 bukuservis/
-├── index.html
-├── assets/              # favicon + gambar profil
-├── css/style.css
-├── js/api.js            # lapisan data (localStorage / API)
-├── js/app.js            # UI + logik due + laporan
-├── functions/api/[[path]].js   # Cloudflare Pages Function
-├── schema.sql           # skema D1 + katalog servis lalai
+├── public/                  # fail statik yang dihantar ke browser
+│   ├── index.html
+│   ├── css/style.css
+│   ├── js/api.js            # lapisan data (localStorage / API)
+│   ├── js/app.js            # UI + logik due + laporan
+│   ├── assets/              # favicon + gambar profil
+│   └── _headers             # header keselamatan
+├── src/
+│   ├── worker.js            # router: /api/* → api.js, lain-lain → fail statik
+│   └── api.js               # auth, bootstrap, mutate (D1)
+├── schema.sql               # skema D1 + katalog servis lalai
+├── schema-d1-console.sql    # versi tanpa komen untuk D1 Console
 ├── wrangler.toml
-└── _headers
+└── README.md
 ```
 
 ## 1. Cuba dulu (tanpa backend)
 
-Buka `index.html` terus dalam browser. Ia akan jalan dalam **mod demo**: data contoh disimpan dalam `localStorage` browser itu sahaja.
+Buka `public/index.html` terus dalam browser. Ia akan jalan dalam **mod demo**: data contoh disimpan dalam `localStorage` browser itu sahaja.
 
-Atau jalankan server ringkas:
+## 2. Uji lokal dengan D1 sebenar
 
-```powershell
-cd bukuservis
-python -m http.server 8123
-```
-
-Kemudian buka `http://localhost:8123`.
-
-> Mod demo hanya untuk mencuba UI. Untuk sync antara peranti, ikut langkah di bawah.
-
-## 2. Deploy ke Cloudflare
-
-### 2.1 Push ke GitHub
-
-Repo: `https://github.com/zahiruddin0/bukuservis`
-
-Kalau repo belum wujud, buat repo **kosong** di <https://github.com/new>:
-
-- Repository name: `bukuservis`
-- Public atau Private (dua-dua boleh dengan Cloudflare Pages)
-- **Jangan** tanda "Add a README", ".gitignore" atau "license"
-
-Kemudian dari folder projek:
-
-```powershell
-cd bukuservis
-git push -u origin main
-```
-
-Kali pertama, Git Credential Manager akan buka tetingkap log masuk GitHub — klik **Sign in with your browser** dan benarkan akses. Selepas itu kau tak perlu log masuk lagi.
-
-### 2.2 Buat database D1
+Perlu Node.js. `wrangler.local.toml` mengandungi binding ujian (PIN `123456`) dan tidak di-commit.
 
 ```powershell
 npm install -g wrangler
-wrangler login
-wrangler d1 create bukuservis
+wrangler d1 execute bukuservis --local --config wrangler.local.toml --file=./schema.sql
+wrangler dev --config wrangler.local.toml
 ```
 
-Salin `database_id` yang keluar ke dalam `wrangler.toml`.
+Buka `http://localhost:8787` → masukkan PIN `123456`.
 
-Kemudian jalankan skema:
+> Data lokal disimpan dalam folder `.wrangler/`. Padam folder itu untuk mula semula.
+
+## 3. Deploy ke Cloudflare
+
+### 3.1 Push ke GitHub
+
+Repo: `https://github.com/zahiruddin0/bukuservis`
 
 ```powershell
-wrangler d1 execute bukuservis --remote --file=./schema.sql
+cd bukuservis
+git push
 ```
 
-> ⚠️ `schema.sql` memadam jadual sedia ada (`DROP TABLE`). Jalankan sekali sahaja pada database baharu. Jika sudah ada data, eksport dahulu.
+### 3.2 Buat database D1
 
-**Tanpa Node/wrangler** (boleh guna dashboard sahaja):
+1. Dashboard → **Storage & Databases** → **D1 SQL Database** → **Create database**
+2. Nama: `bukuservis`
+3. Buka database → tab **Console**
+4. Copy seluruh kandungan **`schema-d1-console.sql`** (bukan `schema.sql`), tampal, klik **Run**
+   - Console D1 menghilangkan newline semasa paste. Komen `--` akan menelan seluruh skrip dan keluar "No SQL statements detected". Fail ini tiada komen.
+5. Sahkan: `/tables` → 6 jadual; `SELECT COUNT(*) FROM service_types;` → **36**
 
-1. Dashboard → **Storage & Databases** → **D1 SQL Database** → **Create** → nama `bukuservis`.
-2. Buka database itu → tab **Console**.
-3. Copy seluruh kandungan **`schema-d1-console.sql`** (bukan `schema.sql`), tampal dalam console, klik **Run**.
-   - Versi ini tiada komen `--` sebab console D1 menghilangkan newline semasa paste; komen akan menelan seluruh skrip dan keluar "No SQL statements detected".
-4. Semak dengan `/tables` — patut ada 6 jadual. `SELECT COUNT(*) FROM service_types;` patut pulang **36**.
-5. Database ID boleh dilihat pada halaman database (untuk rujukan).
+### 3.3 Cipta Worker
 
-### 2.3 Sambung repo ke Cloudflare Pages
+1. Dashboard → **Workers & Pages** → **Create** → **Workers** → **Connect to Git**
+2. Pilih repo `bukuservis`
+3. Nama projek: `bukuservis` (mesti sama dengan `name` dalam `wrangler.toml`)
+4. Build command: kosongkan
+5. Deploy command: `npx wrangler deploy`
+6. **Deploy**
 
-1. Cloudflare Dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**.
-2. Pilih repo `bukuservis`.
-3. **Project name: `bukuservis-zahir`** — inilah yang jadi `bukuservis-zahir.pages.dev`.
-4. Tetapan build:
-   - Framework preset: **None**
-   - Build command: **kosongkan**
-   - Build output directory: **`/`**
-   - Root directory: **kosongkan** (repo root memang folder app)
-5. **Save and Deploy**.
+### 3.4 Binding dan secret
 
-Projek akan dapat URL `https://bukuservis-zahir.pages.dev`.
+Dalam projek Worker → **Settings**:
 
-
-### 2.4 Tetapkan binding dan secret
-
-Dalam projek Pages → **Settings**:
-
-**Functions → D1 database bindings**
+**Bindings** → **Add** → **D1 database**
 - Variable name: `DB`
 - Database: `bukuservis`
 
-**Environment variables** (Production dan Preview), jenis **Secret**:
-- `APP_PIN` — PIN log masuk kau (contoh 6 digit). Jangan guna PIN bank.
-- `SESSION_SECRET` — string rawak panjang. Jana dengan:
+**Variables and Secrets** → **Add** (jenis **Secret**):
+
+| Nama | Nilai |
+|---|---|
+| `APP_PIN` | PIN log masuk kau (6 digit, jangan guna PIN bank) |
+| `SESSION_SECRET` | string rawak panjang |
+
+Jana `SESSION_SECRET`:
 
 ```powershell
-# PowerShell
 [Convert]::ToBase64String((1..32 | ForEach-Object { [byte](Get-Random -Max 256) }))
 ```
 
-Selepas simpan, **Redeploy** (Deployments → Retry deployment) supaya binding aktif.
+Selepas simpan, **Redeploy** (Deployments → ⋯ → Retry deployment) supaya binding aktif.
 
-### 2.5 Buka
+### 3.5 Buka
 
-`https://nama-projek.pages.dev` → masukkan PIN → tambah kenderaan pertama.
+`https://bukuservis.<subdomain>.workers.dev` → masukkan PIN → tambah kenderaan pertama.
 
-## 3. Cara guna
+Boleh tambah domain sendiri melalui **Settings → Domains & Routes**.
+
+## 4. Cara guna
 
 ### Rekod servis
 
@@ -166,13 +146,13 @@ Butang **+** → **Isi minyak**. Tandakan **Isi penuh** supaya km/L boleh dikira
 
 Butang **+ Bacaan** pada kad kenderaan. Berguna bila kau hantar servis dan bengkel tidak beri resit.
 
-## 4. Sandaran data
+## 5. Sandaran data
 
 **Tetapan → Eksport JSON** memuat turun semua data. Simpan fail itu dari semasa ke semasa.
 
 Untuk pulih: **Import JSON** (mod demo) atau masukkan semula melalui D1 console jika perlu.
 
-## 5. Nota teknikal
+## 6. Nota teknikal
 
 - Odometer semasa = bacaan tertinggi antara rekod servis, fuel log, bacaan manual dan `odometer_base`.
 - Setiap item servis ada `track`: `interval` (ada due) atau `history` (rekod sahaja). Item `history` tidak masuk senarai perhatian tetapi masih dalam sejarah dan laporan.
@@ -181,8 +161,9 @@ Untuk pulih: **Import JSON** (mod demo) atau masukkan semula melalui D1 console 
 - Setiap item servis boleh override due (kolum `next_due_km`, `next_due_date`) — belum ada di UI, boleh tambah kemudian.
 - km/L = jarak antara dua isi penuh ÷ liter isi kedua. Hanya pasangan yang kedua-duanya `full_tank = 1` dikira.
 - Cookie session: HMAC-SHA256, sah 30 hari, `HttpOnly`, `SameSite=Lax`, `Secure` pada HTTPS.
+- Worker menghantar fail statik dari `public/`; hanya laluan `/api/*` masuk ke kod. Fail di luar `public/` (README, schema) tidak boleh diakses dari browser.
 
-## 6. Had versi ini
+## 7. Had versi ini
 
 - Satu pengguna sahaja (satu PIN). Tiada pendaftaran.
 - Tiada lampiran gambar resit.

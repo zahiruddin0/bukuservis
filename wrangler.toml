@@ -1,14 +1,23 @@
 name = "bukuservis"
-compatibility_date = "2024-11-01"
-pages_build_output_dir = "."
+main = "src/worker.js"
+compatibility_date = "2026-10-01"
 
-# Binding D1 untuk deploy melalui Dashboard Cloudflare Pages:
-#   Settings → Functions → D1 database bindings → Variable name: DB
+# Fail statik (index.html, css, js, assets) dihantar dari folder public/
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# ------------------------------------------------------------------
+# Binding D1 untuk production.
+# Cara paling senang: tetapkan di dashboard
+#   Workers & Pages → projek → Settings → Bindings → Add → D1 database
+#   Variable name: DB
 #
-# Jika guna wrangler CLI, buka komen di bawah dan isi database_id sebenar
-# (dapat daripada `wrangler d1 create bukuservis`):
+# Atau isi database_id sebenar di bawah (dapat dari halaman D1) dan
+# buka komen. Jangan biarkan nilai palsu — deploy akan gagal.
 #
 # [[d1_databases]]
 # binding = "DB"
 # database_name = "bukuservis"
 # database_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+# ------------------------------------------------------------------
