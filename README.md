@@ -160,6 +160,8 @@ Item sebegini tetap muncul dalam **Sejarah** dan **Laporan → Kos ikut kategori
 
 Untuk item katalog sendiri, buka **Tetapan → Katalog servis → + Tambah item servis** dan pilih **Barang / ubah suai — rekod sahaja**.
 
+Untuk buang item katalog, tekan ikon **🗑** di baris item itu (atau **Edit** → **Buang item servis**). Item yang sudah digunakan dalam rekod servis tidak boleh dibuang supaya sejarah lama kekal — padam rekod servis yang menggunakan item itu dahulu jika benar-benar perlu.
+
 ### Isi minyak
 
 Butang **+** → **Isi minyak**. Tandakan **Isi penuh** supaya km/L boleh dikira. Isi sebahagian (contoh RM10) tidak akan merosakkan kiraan — ia hanya dilangkau.

@@ -707,7 +707,10 @@
                   <div style="font-size:14px;font-weight:600">${esc(t.name)}${t.track === 'history' ? ' <span class="pill none">sekali</span>' : ''}</div>
                   <div class="tiny muted">${intervalText(t)}</div>
                 </div>
-                <button class="icon-btn" data-act="edit-st" data-id="${t.id}" type="button" title="Edit">✎</button>
+                <div style="display:flex;gap:4px;align-items:center">
+                  <button class="icon-btn" data-act="edit-st" data-id="${t.id}" type="button" title="Edit">✎</button>
+                  <button class="icon-btn" data-act="del-st" data-id="${t.id}" type="button" title="Buang">🗑</button>
+                </div>
               </div>`;
             const interval = list.filter((t) => t.track !== 'history');
             const history = list.filter((t) => t.track === 'history');
@@ -759,7 +762,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.2</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.3.3</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1282,6 +1285,7 @@
     sheet({
       title: isEdit ? 'Edit item servis' : 'Tambah item servis',
       submit: 'Simpan',
+      danger: isEdit ? 'Buang item servis' : null,
       body: `
         <div class="field">
           <label class="label">Nama item</label>
@@ -1334,6 +1338,14 @@
           interval_months: num(fd.get('interval_months')) || null
         });
         afterMutate(db, 'Katalog servis dikemas kini');
+      },
+      onDanger: async () => {
+        if (!confirm('Buang "' + s.name + '" dari katalog servis? Rekod lama tidak terjejas.')) return;
+        try {
+          const db = await API.mutate('serviceType', 'delete', { id: s.id });
+          closeSheet();
+          afterMutate(db, 'Item servis dibuang');
+        } catch (err) { toast(err.message, true); }
       }
     });
   }
@@ -1583,6 +1595,7 @@
         </div>
 
         <div class="sheet-foot">
+          <button class="btn btn-danger" type="button" data-act="del-st" data-id="${t.id}">Buang item</button>
           <button class="btn btn-ghost" type="button" data-act="edit-st" data-id="${t.id}">Edit interval</button>
           <button class="btn btn-primary" type="button" data-act="add-visit" data-st="${t.id}">+ Rekod servis</button>
         </div>
@@ -1705,6 +1718,14 @@
       }
       if (act === 'add-st') { openServiceTypeForm(null); return; }
       if (act === 'edit-st') { closeSheet(); setTimeout(() => openServiceTypeForm(stById(el.dataset.id)), 60); return; }
+      if (act === 'del-st') {
+        const st = stById(el.dataset.id);
+        if (!st) return;
+        if (!confirm('Buang "' + st.name + '" dari katalog servis? Rekod lama tidak terjejas.')) return;
+        closeSheet();
+        mutate('serviceType', 'delete', { id: st.id }, 'Item servis dibuang');
+        return;
+      }
       if (act === 'service-detail') { openServiceDetail(Number(el.dataset.id)); return; }
       if (act === 'event-detail') { openEventDetail(el.dataset.kind, Number(el.dataset.id)); return; }
 
