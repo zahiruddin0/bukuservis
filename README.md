@@ -12,6 +12,7 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **Fuel log** — liter, harga, stesen, km/L (hanya untuk isi penuh).
 - **Laporan** — kos bulanan, kos per km, kos ikut kategori, prestasi ikut stesen minyak.
 - **Sejarah mileage** — lihat bacaan odometer pada 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas, serta timeline penuh.
+- **GPS tracker & SIM** — simpan nombor SIM, telco, pelan dan **tarikh luput SIM**, dengan peringatan pada dashboard bila hampir atau sudah luput.
 - **Semua rekod boleh diedit atau dipadam** - servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
 - **Tema auto / cerah / gelap** — ikut sistem atau pilih sendiri dalam Tetapan.
 - **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
@@ -181,6 +182,24 @@ Nilai **Odometer asas** juga boleh diubah melalui butang **Edit asas** di bahagi
 
 Semua nilai dikira daripada rekod yang kau masukkan sendiri — bukan bacaan meter hidup.
 
+### GPS tracker & SIM
+
+Buka **Tetapan → GPS tracker & SIM → + Tambah tracker / SIM**, atau tambah dari kad **GPS tracker / SIM** pada dashboard.
+
+Isi:
+
+- **Nama peranti** — cth: `Tracker Myvi`
+- **No. SIM / telefon** dan **telco** — pilihan, untuk rujukan
+- **Pelan / langganan** — cth: `Prepaid data 1GB/bulan`
+- **Tarikh luput SIM** — tarikh langganan tamat atau perlu diperbaharui
+- **Ingatkan (hari sebelum)** — cth: `30` hari sebelum luput
+
+Bila tarikh hampir, dashboard tunjuk pil kuning **X hari lagi**; bila sudah lepas, pil merah **Luput X hari lepas**. Tekan baris itu untuk edit.
+
+Untuk perbaharui, buka tracker dan tekan **+30 hari**, **+90 hari** atau **+1 tahun** — tarikh akan dilanjutkan dari tarikh luput semasa (atau dari hari ini jika sudah luput), kemudian simpan.
+
+> BukuServis tidak menjejak lokasi GPS dan tidak menghantar SMS/e-mel. Peringatan hanya muncul bila kau buka app.
+
 ### Edit dan padam rekod
 
 Setiap rekod boleh dibetulkan atau dibuang bila-bila masa:
@@ -209,6 +228,7 @@ Untuk pulih: **Import JSON** (mod demo) atau masukkan semula melalui D1 console 
 - Setiap item servis boleh override due (kolum `next_due_km`, `next_due_date`) — belum ada di UI, boleh tambah kemudian.
 - km/L = jarak antara dua isi penuh ÷ liter isi kedua. Hanya pasangan yang kedua-duanya `full_tank = 1` dikira.
 - Cookie session: HMAC-SHA256, sah 30 hari, `HttpOnly`, `SameSite=Lax`, `Secure` pada HTTPS.
+- Jadual `trackers` menyimpan rekod GPS tracker/SIM. Worker mencipta jadual itu secara automatik (`CREATE TABLE IF NOT EXISTS`) jika belum ada, jadi tiada migrasi manual diperlukan pada database sedia ada.
 - Worker menghantar fail statik dari `public/`; hanya laluan `/api/*` masuk ke kod. Fail di luar `public/` (README, schema) tidak boleh diakses dari browser.
 
 ## 7. Had versi ini

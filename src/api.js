@@ -157,6 +157,12 @@ function nullableNum(v) {
   return n > 0 ? n : null;
 }
 
+function remindDays(v) {
+  if (v == null || v === '') return 30;
+  const n = Math.round(num(v));
+  return n >= 0 ? Math.min(n, 365) : 30;
+}
+
 /* ---------------- bootstrap ---------------- */
 function requireDb(env) {
   const db = env && env.DB;
@@ -169,16 +175,38 @@ function requireDb(env) {
   return db;
 }
 
+// Jadual tracker ditambah kemudian; cipta sekali jika belum ada supaya
+// pengguna tidak perlu jalankan SQL manual pada database sedia ada.
+let schemaReady = false;
+async function ensureSchema(db) {
+  if (schemaReady) return;
+  await db.prepare(
+    'CREATE TABLE IF NOT EXISTS trackers (' +
+    'id INTEGER PRIMARY KEY AUTOINCREMENT, ' +
+    'name TEXT NOT NULL, ' +
+    'phone TEXT, ' +
+    'provider TEXT, ' +
+    'plan TEXT, ' +
+    'expiry_date TEXT NOT NULL, ' +
+    'remind_days INTEGER DEFAULT 30, ' +
+    'notes TEXT, ' +
+    'created_at TEXT)'
+  ).run();
+  schemaReady = true;
+}
+
 async function bootstrap(env) {
   const db = requireDb(env);
+  await ensureSchema(db);
 
-  const [vehicles, types, visits, items, fuel, readings] = await Promise.all([
+  const [vehicles, types, visits, items, fuel, readings, trackers] = await Promise.all([
     db.prepare('SELECT * FROM vehicles ORDER BY id').all(),
     db.prepare('SELECT * FROM service_types ORDER BY sort_order, id').all(),
     db.prepare('SELECT * FROM visits ORDER BY date DESC, odometer DESC').all(),
     db.prepare('SELECT * FROM visit_items ORDER BY id').all(),
     db.prepare('SELECT * FROM fuel_logs ORDER BY date DESC, odometer DESC').all(),
-    db.prepare('SELECT * FROM readings ORDER BY date DESC, odometer DESC').all()
+    db.prepare('SELECT * FROM readings ORDER BY date DESC, odometer DESC').all(),
+    db.prepare('SELECT * FROM trackers ORDER BY expiry_date, id').all()
   ]);
 
   const byVisit = new Map();
@@ -192,13 +220,15 @@ async function bootstrap(env) {
     service_types: types.results || [],
     visits: (visits.results || []).map((v) => Object.assign({}, v, { items: byVisit.get(v.id) || [] })),
     fuel_logs: fuel.results || [],
-    readings: readings.results || []
+    readings: readings.results || [],
+    trackers: trackers.results || []
   };
 }
 
 /* ---------------- mutasi ---------------- */
 async function mutate(env, body) {
   const db = requireDb(env);
+  await ensureSchema(db);
   const type = body && body.type;
   const action = body && body.action;
   const data = (body && body.data) || {};
@@ -457,6 +487,51 @@ async function mutate(env, body) {
       const used = await db.prepare('SELECT COUNT(*) AS n FROM visit_items WHERE service_type_id = ?').bind(id).first();
       if (used && used.n > 0) throw new Error('Item ini sudah digunakan dalam rekod. Ia tidak boleh dibuang.');
       await db.prepare('DELETE FROM service_types WHERE id = ?').bind(id).run();
+      return;
+    }
+  }
+
+  if (type === 'tracker') {
+    if (action === 'create') {
+      const expiry = str(data.expiry_date, 10);
+      if (!expiry) throw new Error('Masukkan tarikh luput SIM.');
+      await db.prepare(
+        'INSERT INTO trackers (name, phone, provider, plan, expiry_date, remind_days, notes, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      ).bind(
+        str(data.name, 80) || 'GPS tracker',
+        str(data.phone, 30),
+        str(data.provider, 40),
+        str(data.plan, 80),
+        expiry,
+        remindDays(data.remind_days),
+        str(data.notes, 300),
+        new Date().toISOString()
+      ).run();
+      return;
+    }
+
+    if (action === 'update') {
+      const id = Number(data.id);
+      if (!id) throw new Error('Tracker tidak dijumpai.');
+      const expiry = str(data.expiry_date, 10);
+      if (!expiry) throw new Error('Masukkan tarikh luput SIM.');
+      await db.prepare(
+        'UPDATE trackers SET name = ?, phone = ?, provider = ?, plan = ?, expiry_date = ?, remind_days = ?, notes = ? WHERE id = ?'
+      ).bind(
+        str(data.name, 80) || 'GPS tracker',
+        str(data.phone, 30),
+        str(data.provider, 40),
+        str(data.plan, 80),
+        expiry,
+        remindDays(data.remind_days),
+        str(data.notes, 300),
+        id
+      ).run();
+      return;
+    }
+
+    if (action === 'delete') {
+      await db.prepare('DELETE FROM trackers WHERE id = ?').bind(Number(data.id)).run();
       return;
     }
   }

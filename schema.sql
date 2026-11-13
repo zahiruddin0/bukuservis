@@ -9,6 +9,7 @@ DROP TABLE IF EXISTS visit_items;
 DROP TABLE IF EXISTS visits;
 DROP TABLE IF EXISTS fuel_logs;
 DROP TABLE IF EXISTS readings;
+DROP TABLE IF EXISTS trackers;
 DROP TABLE IF EXISTS vehicles;
 DROP TABLE IF EXISTS service_types;
 
@@ -82,6 +83,18 @@ CREATE TABLE readings (
   date        TEXT    NOT NULL,
   odometer    INTEGER NOT NULL,
   notes       TEXT
+);
+
+CREATE TABLE trackers (
+  id           INTEGER PRIMARY KEY AUTOINCREMENT,
+  name         TEXT    NOT NULL,
+  phone        TEXT,                              -- no. SIM / telefon
+  provider     TEXT,                              -- telco
+  plan         TEXT,                              -- pakej / langganan
+  expiry_date  TEXT    NOT NULL,                  -- YYYY-MM-DD, tarikh luput SIM
+  remind_days  INTEGER DEFAULT 30,                -- hari sebelum untuk peringatan
+  notes        TEXT,
+  created_at   TEXT
 );
 
 CREATE INDEX idx_visits_vehicle   ON visits(vehicle_id, odometer);

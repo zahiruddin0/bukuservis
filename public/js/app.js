@@ -135,6 +135,25 @@
     return t ? t.name : (String(it.custom_name || '').trim() || 'Item lain');
   }
 
+  /* ---------------- GPS tracker / SIM ---------------- */
+  function trackersSorted() {
+    return (state.db.trackers || []).slice().sort((a, b) =>
+      String(a.expiry_date).localeCompare(String(b.expiry_date)) || a.id - b.id);
+  }
+
+  function trackerStatus(t) {
+    const days = daysUntil(t.expiry_date);
+    const remind = t.remind_days == null ? 30 : Math.max(0, Number(t.remind_days) || 0);
+    if (days < 0) return { status: 'bad', days, label: 'Luput ' + Math.abs(days) + ' hari lepas' };
+    if (days === 0) return { status: 'bad', days, label: 'Luput hari ini' };
+    if (days <= remind) return { status: 'warn', days, label: days + ' hari lagi' };
+    return { status: 'ok', days, label: 'Aktif · ' + days + ' hari lagi' };
+  }
+
+  function trackerSub(t) {
+    return [t.phone, t.provider, t.plan].filter(Boolean).join(' · ') || 'Tiada butiran SIM';
+  }
+
   // Item 'history' (coverset, ekzos, clutch plate…) direkod tetapi tidak
   // dimasukkan ke senarai perhatian / due supaya dashboard kekal bersih.
   function applicableTypes(v, includeHistory) {
@@ -309,6 +328,7 @@
     const series = fuelSeries(v.id);
     const lastKml = series.length ? series[series.length - 1].kml : null;
     const spend30 = spendSince(v.id, daysAgoISO(30));
+    const trackers = trackersSorted();
 
     const sorted = items.slice().sort((a, b) => rank[b.due.status] - rank[a.due.status] || b.due.progress - a.due.progress);
     const recent = vehicleEvents(v.id).slice(0, 3);
@@ -355,6 +375,24 @@
           </div>
         </div>
       </section>`}
+
+      ${trackers.length ? `
+      <section class="section">
+        <h2 class="section-title">GPS tracker / SIM <span class="count">${trackers.length}</span></h2>
+        <div class="list">
+          ${trackers.map((t) => {
+            const s = trackerStatus(t);
+            return `
+            <button class="due-row is-${s.status}" data-act="edit-tracker" data-id="${t.id}" type="button">
+              <div class="due-main">
+                <div class="due-name">📡 ${esc(t.name)}</div>
+                <div class="due-sub">${esc(trackerSub(t))} · luput ${fmtDate(t.expiry_date)}</div>
+              </div>
+              <div class="due-right"><span class="pill ${s.status}">${s.label}</span></div>
+            </button>`;
+          }).join('')}
+        </div>
+      </section>` : ''}
 
       <section class="section">
         <h2 class="section-title">Item servis <span class="count">${items.length}</span></h2>
@@ -693,6 +731,7 @@
   function settingsHTML() {
     const vehicles = state.db.vehicles;
     const types = state.db.service_types;
+    const trackers = trackersSorted();
 
     return `
       <section class="section" style="margin-top:14px">
@@ -710,6 +749,30 @@
             </div>`).join('')}
         </div>
         <button class="btn btn-ghost btn-block btn-sm" style="margin-top:10px" data-act="add-vehicle" type="button">+ Tambah kenderaan</button>
+      </section>
+
+      <section class="section">
+        <h2 class="section-title">GPS tracker &amp; SIM <span class="count">${trackers.length}</span></h2>
+        ${trackers.length ? `
+        <div class="list">
+          ${trackers.map((t) => {
+            const s = trackerStatus(t);
+            return `
+            <div class="due-row" style="cursor:default">
+              <div class="due-main">
+                <div class="due-name">📡 ${esc(t.name)}</div>
+                <div class="due-sub">${esc(trackerSub(t))} · luput ${fmtDate(t.expiry_date)}</div>
+              </div>
+              <div class="row" style="gap:6px;align-items:center">
+                <span class="pill ${s.status}">${s.label}</span>
+                <button class="icon-btn" data-act="edit-tracker" data-id="${t.id}" type="button" title="Edit">✎</button>
+                <button class="icon-btn" data-act="del-tracker" data-id="${t.id}" type="button" title="Buang">🗑</button>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : `<div class="card" style="padding:14px"><div class="muted small">Belum ada tracker. Tambah untuk simpan tarikh luput SIM dan dapat peringatan pembaharuan.</div></div>`}
+        <button class="btn btn-ghost btn-block btn-sm" style="margin-top:10px" data-act="add-tracker" type="button">+ Tambah tracker / SIM</button>
+        <div class="note">Peringatan hanya muncul bila kau buka BukuServis. Tiada notifikasi SMS atau e-mel.</div>
       </section>
 
       <section class="section">
@@ -780,7 +843,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.3.6</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.4.0</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1379,6 +1442,85 @@
     });
   }
 
+  function openTrackerForm(t) {
+    const isEdit = !!t;
+    const x = t || { name: '', phone: '', provider: '', plan: '', expiry_date: '', remind_days: 30, notes: '' };
+
+    sheet({
+      title: isEdit ? 'Edit tracker / SIM' : 'Tambah tracker / SIM',
+      submit: isEdit ? 'Simpan perubahan' : 'Tambah',
+      danger: isEdit ? 'Buang tracker' : null,
+      body: `
+        <div class="field">
+          <label class="label">Nama peranti</label>
+          <input class="input" name="name" value="${esc(x.name)}" placeholder="cth: Tracker Myvi" required>
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label">No. SIM / telefon</label>
+            <input class="input" name="phone" value="${esc(x.phone)}" placeholder="cth: 012-3456789" inputmode="tel" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="label">Telco</label>
+            <input class="input" name="provider" value="${esc(x.provider)}" placeholder="cth: CelcomDigi" list="telco-list" autocomplete="off">
+            <datalist id="telco-list">
+              ${['CelcomDigi', 'Maxis', 'U Mobile', 'Digi', 'Celcom', 'Tune Talk', 'Yes', 'XOX', 'redONE'].map((n) => `<option value="${n}"></option>`).join('')}
+            </datalist>
+          </div>
+        </div>
+        <div class="field">
+          <label class="label">Pelan / langganan (pilihan)</label>
+          <input class="input" name="plan" value="${esc(x.plan)}" placeholder="cth: Prepaid data 1GB/bulan">
+        </div>
+        <div class="grid-2">
+          <div class="field">
+            <label class="label">Tarikh luput SIM</label>
+            <input class="input" type="date" name="expiry_date" value="${esc(x.expiry_date)}" required>
+          </div>
+          <div class="field">
+            <label class="label">Ingatkan (hari sebelum)</label>
+            <input class="input" type="number" name="remind_days" min="0" max="365" value="${x.remind_days == null ? 30 : x.remind_days}">
+          </div>
+        </div>
+        <div class="row" style="flex-wrap:wrap;margin-top:-4px">
+          <span class="tiny muted">Lanjut tarikh:</span>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="renew-date" data-days="30">+30 hari</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="renew-date" data-days="90">+90 hari</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="renew-date" data-days="365">+1 tahun</button>
+        </div>
+        <div class="field">
+          <label class="label">Nota (pilihan)</label>
+          <input class="input" name="notes" value="${esc(x.notes)}" placeholder="cth: renew sebelum 15hb">
+        </div>
+        <div class="note">Tarikh ini untuk peringatan pembaharuan SIM tracker. BukuServis tidak menjejak lokasi GPS.</div>
+      `,
+      onSubmit: async (form) => {
+        const fd = new FormData(form);
+        if (!String(fd.get('name') || '').trim()) throw new Error('Masukkan nama peranti.');
+        if (!fd.get('expiry_date')) throw new Error('Masukkan tarikh luput SIM.');
+        const db = await API.mutate('tracker', isEdit ? 'update' : 'create', {
+          id: isEdit ? x.id : undefined,
+          name: fd.get('name'),
+          phone: fd.get('phone'),
+          provider: fd.get('provider'),
+          plan: fd.get('plan'),
+          expiry_date: fd.get('expiry_date'),
+          remind_days: fd.get('remind_days'),
+          notes: fd.get('notes')
+        });
+        afterMutate(db, isEdit ? 'Tracker dikemas kini' : 'Tracker ditambah');
+      },
+      onDanger: async () => {
+        if (!confirm('Buang tracker "' + x.name + '"? Tarikh luput SIM akan dipadam.')) return;
+        try {
+          const db = await API.mutate('tracker', 'delete', { id: x.id });
+          closeSheet();
+          afterMutate(db, 'Tracker dibuang');
+        } catch (err) { toast(err.message, true); }
+      }
+    });
+  }
+
   /* ---------------- detail sheets ---------------- */
   function openEventDetail(kind, id) {
     if (kind === 'visit') openVisitDetail(id);
@@ -1732,6 +1874,35 @@
       if (act === 'add-reading') { closeSheet(); setTimeout(openReadingForm, 60); return; }
       if (act === 'add-vehicle') { openVehicleForm(null); return; }
       if (act === 'edit-vehicle') { openVehicleForm(vehicleById(el.dataset.id)); return; }
+      if (act === 'add-tracker') { openTrackerForm(null); return; }
+      if (act === 'edit-tracker') {
+        const t = (state.db.trackers || []).find((x) => x.id === Number(el.dataset.id));
+        if (!t) return;
+        closeSheet();
+        setTimeout(() => openTrackerForm(t), 60);
+        return;
+      }
+      if (act === 'del-tracker') {
+        const t = (state.db.trackers || []).find((x) => x.id === Number(el.dataset.id));
+        if (!t) return;
+        if (!confirm('Buang tracker "' + t.name + '"?')) return;
+        closeSheet();
+        mutate('tracker', 'delete', { id: t.id }, 'Tracker dibuang');
+        return;
+      }
+      if (act === 'renew-date') {
+        const form = $('#sheet-form');
+        const input = form && form.querySelector('input[name="expiry_date"]');
+        if (input) {
+          const days = Number(el.dataset.days) || 30;
+          const cur = input.value ? parseDate(input.value) : null;
+          const now = parseDate(today());
+          const base = cur && cur > now ? cur : now;
+          base.setDate(base.getDate() + days);
+          input.value = localISO(base);
+        }
+        return;
+      }
       if (act === 'odo-history') { closeSheet(); setTimeout(openOdoHistory, 60); return; }
       if (act === 'edit-visit') {
         const x = state.db.visits.find((v) => v.id === Number(el.dataset.id));

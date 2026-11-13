@@ -82,7 +82,7 @@
       id: i + 1, notes: '', sort_order: i + 1, track: 'interval'
     }, s));
 
-    const db = { vehicles: [], service_types: types, visits: [], fuel_logs: [], readings: [], version: DB_VERSION };
+    const db = { vehicles: [], service_types: types, visits: [], fuel_logs: [], readings: [], trackers: [], version: DB_VERSION };
     const stId = (code) => types.find((t) => t.code === code).id;
 
     db.vehicles.push(
@@ -214,6 +214,7 @@
     if (!Array.isArray(db.visits)) { db.visits = []; changed = true; }
     if (!Array.isArray(db.fuel_logs)) { db.fuel_logs = []; changed = true; }
     if (!Array.isArray(db.readings)) { db.readings = []; changed = true; }
+    if (!Array.isArray(db.trackers)) { db.trackers = []; changed = true; }
 
     if (db.version !== DB_VERSION) {
       SERVICE_SEED.forEach((s) => {
@@ -447,6 +448,44 @@
         const used = db.visits.some((v) => v.items.some((i) => i.service_type_id === id));
         if (used) throw new Error('Item ini sudah digunakan dalam rekod. Ia tidak boleh dibuang.');
         db.service_types = db.service_types.filter((x) => x.id !== id);
+      }
+      return db;
+    }
+
+    if (type === 'tracker') {
+      const remind = (v) => {
+        if (v == null || v === '') return 30;
+        return Math.min(365, Math.max(0, Math.round(num(v))));
+      };
+      const expiry = String(data.expiry_date || '').trim();
+      if (action === 'create') {
+        if (!expiry) throw new Error('Masukkan tarikh luput SIM.');
+        db.trackers.push({
+          id: nextId(db.trackers),
+          name: String(data.name || 'GPS tracker').trim(),
+          phone: String(data.phone || '').trim(),
+          provider: String(data.provider || '').trim(),
+          plan: String(data.plan || '').trim(),
+          expiry_date: expiry,
+          remind_days: remind(data.remind_days),
+          notes: String(data.notes || '').trim(),
+          created_at: new Date().toISOString()
+        });
+      } else if (action === 'update') {
+        const x = db.trackers.find((t) => t.id === Number(data.id));
+        if (!x) throw new Error('Tracker tidak dijumpai');
+        if (!expiry) throw new Error('Masukkan tarikh luput SIM.');
+        Object.assign(x, {
+          name: String(data.name || 'GPS tracker').trim(),
+          phone: String(data.phone || '').trim(),
+          provider: String(data.provider || '').trim(),
+          plan: String(data.plan || '').trim(),
+          expiry_date: expiry,
+          remind_days: remind(data.remind_days),
+          notes: String(data.notes || '').trim()
+        });
+      } else if (action === 'delete') {
+        db.trackers = db.trackers.filter((x) => x.id !== Number(data.id));
       }
       return db;
     }
