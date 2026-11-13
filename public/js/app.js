@@ -843,7 +843,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.4.0</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.5.0</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -2078,7 +2078,7 @@
     document.documentElement.dataset.themePref = pref;
 
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', resolved === 'dark' ? '#131311' : '#f6f5f2');
+    if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0a0e1f' : '#eef1ff');
 
     const btn = $('#theme-btn');
     if (btn) {

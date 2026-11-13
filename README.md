@@ -14,7 +14,7 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **Sejarah mileage** — lihat bacaan odometer pada 7 hari, 30 hari, 3 bulan, 6 bulan dan 1 tahun lepas, serta timeline penuh.
 - **GPS tracker & SIM** — simpan nombor SIM, telco, pelan dan **tarikh luput SIM**, dengan peringatan pada dashboard bila hampir atau sudah luput.
 - **Semua rekod boleh diedit atau dipadam** - servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
-- **Tema auto / cerah / gelap** — ikut sistem atau pilih sendiri dalam Tetapan.
+- **Tema Aurora Glass** — permukaan kaca kabur (glassmorphism) di atas latar gradien; auto / cerah / gelap, boleh pilih sendiri dalam Tetapan.
 - **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
 
 ## Struktur fail
@@ -23,7 +23,8 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 bukuservis/
 ├── public/                  # fail statik yang dihantar ke browser
 │   ├── index.html
-│   ├── css/style.css
+│   ├── css/style.css        # tema aktif (V2 Aurora Glass)
+│   ├── css/themes/v1.css    # arkib tema V1
 │   ├── js/api.js            # lapisan data (localStorage / API)
 │   ├── js/app.js            # UI + logik due + laporan
 │   ├── assets/              # favicon + gambar profil
@@ -212,6 +213,12 @@ Setiap rekod boleh dibetulkan atau dibuang bila-bila masa:
 Di dalam borang edit, butang **Buang rekod** juga tersedia di sebelah kiri. Untuk rekod servis, kau boleh tambah, buang atau tukar item dalam lawatan yang sama. Untuk kenderaan, buka **Tetapan → Kenderaan → Edit** (memadam kenderaan akan memadam semua rekodnya sekali).
 
 Semua baris dalam **Sejarah mileage** dan **Sejarah item ini** boleh ditekan terus untuk edit atau padam.
+
+### Tema paparan
+
+Tema aktif ialah **Aurora Glass** (glassmorphism): permukaan kaca kabur di atas latar gradien ungu-biru, dengan sokongan tema cerah, gelap dan auto (ikut sistem). Tekan butang ◐ di bar atas untuk tukar.
+
+Tema lama **V1** disimpan di `public/css/themes/v1.css`. Untuk kembali kepadanya, salin fail itu ganti `public/css/style.css`, kemudian naikkan nombor versi `?v=` dalam `public/index.html` supaya browser tidak menggunakan cache lama.
 
 ## 5. Sandaran data
 
