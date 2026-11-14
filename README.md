@@ -16,6 +16,7 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **Semua rekod boleh diedit atau dipadam** - servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
 - **Tema Aurora Glass** — permukaan kaca kabur (glassmorphism) di atas latar gradien; auto / cerah / gelap, boleh pilih sendiri dalam Tetapan.
 - **Mod prestasi** — Auto / Ringan / Penuh. Mod Ringan membuang blur kaca dan bayang berat supaya scroll lebih lancar pada telefon lama.
+- **Kategori jelas** — setiap tajuk seksyen ada bar aksen dan ikon; katalog servis dipisahkan kepada kumpulan Motosikal, Kereta dan Umum dengan warna berbeza supaya senang terus ke bahagian yang betul.
 - **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
 
 ## Struktur fail
@@ -227,6 +228,18 @@ Di **Tetapan → Paparan → Prestasi** ada tiga pilihan:
 - **Penuh** — efek kaca kabur penuh seperti V2.
 
 Mod Ringan juga menggantikan `background-attachment: fixed` dengan lapisan gradien tetap yang dicomposite sekali sahaja, jadi browser tidak perlu melukis semula latar setiap kali scroll.
+
+### Tajuk dan kumpulan kategori
+
+Setiap tajuk seksyen (Kenderaan, GPS tracker & SIM, Katalog servis, Paparan, Data, Tentang, serta bahagian di Utama, Sejarah dan Laporan) guna bar aksen gradien, ikon kecil dan pil kiraan supaya kategori terus menonjol walaupun sekali pandang.
+
+Dalam **Katalog servis**, item diasingkan kepada tiga jalur:
+
+- **🏍️ Motosikal** — jalur sian.
+- **🚗 Kereta** — jalur ungu.
+- **📦 Umum** — jalur neutral.
+
+Di bawah setiap jalur, item tetap dipisahkan lagi dengan label **Barang & ubah suai** untuk item sekali/rekod sahaja. Di **Sejarah**, setiap bulan ada jalur sian dengan kiraan rekod; di **Laporan**, tempoh dan ringkasan ada tajuk sendiri supaya senang tahu apa yang sedang dilihat.
 
 Tema lama disimpan sebagai arkib:
 

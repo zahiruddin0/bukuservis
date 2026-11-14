@@ -23,8 +23,11 @@
   --line-2: rgba(23, 26, 51, .06);
   --accent: #5645ea;
   --accent-2: #0b7fc4;
+  --accent-strong: #4a39d6;
+  --accent2-strong: #08629b;
   --accent-ink: #ffffff;
   --accent-soft: rgba(86, 69, 234, .16);
+  --accent2-soft: rgba(11, 127, 196, .14);
   --ok: #0f9d63;
   --ok-soft: rgba(16, 185, 129, .16);
   --warn: #a34707;
@@ -59,8 +62,11 @@ html[data-theme="dark"] {
   --line-2: rgba(255, 255, 255, .08);
   --accent: #a99dff;
   --accent-2: #22d3ee;
+  --accent-strong: var(--accent);
+  --accent2-strong: var(--accent-2);
   --accent-ink: #0a0e1f;
   --accent-soft: rgba(169, 157, 255, .22);
+  --accent2-soft: rgba(34, 211, 238, .16);
   --ok: #4ade80;
   --ok-soft: rgba(74, 222, 128, .16);
   --warn: #fbbf24;
@@ -259,22 +265,122 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .section-title {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 700;
+  gap: 9px;
+  margin: 0 0 12px;
+  font-size: 13.5px;
+  font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: .6px;
-  color: var(--ink-3);
+  letter-spacing: .7px;
+  color: var(--ink);
+}
+
+/* Penanda kategori: bar gradien supaya setiap tajuk seksyen terus menonjol */
+.section-title::before {
+  content: "";
+  flex: 0 0 auto;
+  width: 4px;
+  height: 18px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, var(--accent), var(--accent-2));
+  box-shadow: 0 4px 10px -3px var(--accent);
+}
+
+.section-title::after {
+  content: "";
+  flex: 1 1 auto;
+  min-width: 14px;
+  height: 1px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--line), transparent);
+}
+
+.section-title .title-ico {
+  flex: 0 0 auto;
+  font-size: 15px;
+  line-height: 1;
+  filter: saturate(.95);
 }
 
 .section-title .count {
-  background: var(--glass);
+  flex: 0 0 auto;
+  background: var(--accent-soft);
+  border: 1px solid transparent;
+  color: var(--accent-strong);
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 8px;
+  border-radius: 999px;
+  letter-spacing: 0;
+}
+
+/* ---------- kumpulan dalam katalog servis ---------- */
+.group-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 14px -8px 6px;
+  padding: 9px 11px;
+  border-radius: 12px;
+  background: var(--accent-soft);
+  border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--accent);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+}
+.group-head:first-child { margin-top: 6px; }
+.group-head.is-motorcycle {
+  background: var(--accent2-soft);
+  border-left-color: var(--accent-2);
+}
+.group-head.is-car {
+  background: var(--accent-soft);
+  border-left-color: var(--accent);
+}
+.group-head.is-both {
+  background: var(--glass-soft);
+  border-left-color: var(--ink-3);
+}
+.group-head .group-ico { font-size: 16px; line-height: 1; }
+.group-head .group-count {
+  margin-left: auto;
+  min-width: 24px;
+  text-align: center;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--glass-strong);
   border: 1px solid var(--glass-border);
   color: var(--ink-2);
   font-size: 11px;
-  padding: 1px 7px;
-  border-radius: 999px;
+  letter-spacing: 0;
+}
+
+.group-sub {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 12px 2px 3px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.group-sub::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: var(--ink-3);
+  opacity: .75;
+}
+.group-sub .group-count {
+  margin-left: auto;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--ink-3);
   letter-spacing: 0;
 }
 
@@ -680,6 +786,9 @@ textarea.input { resize: vertical; min-height: 64px; }
   position: sticky;
   top: 66px;
   z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 12px;
   font-weight: 700;
   text-transform: uppercase;
@@ -689,9 +798,22 @@ textarea.input { resize: vertical; min-height: 64px; }
   margin: 0 -2px;
   background: var(--glass);
   border: 1px solid var(--glass-border);
+  border-left: 3px solid var(--accent-2);
   border-radius: 10px;
   -webkit-backdrop-filter: var(--glass-blur);
   backdrop-filter: var(--glass-blur);
+}
+.month-head .group-count {
+  margin-left: auto;
+  min-width: 22px;
+  text-align: center;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent2-soft);
+  color: var(--accent2-strong);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0;
 }
 
 .event {

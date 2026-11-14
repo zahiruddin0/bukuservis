@@ -354,7 +354,7 @@
 
       ${attention.length ? `
       <section class="section">
-        <h2 class="section-title">Perlu perhatian <span class="count">${attention.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">⚠️</span>Perlu perhatian <span class="count">${attention.length}</span></h2>
         <div class="list">
           ${attention.map((x) => `
             <button class="due-row is-${x.due.status}" data-act="service-detail" data-id="${x.t.id}" type="button">
@@ -378,7 +378,7 @@
 
       ${trackers.length ? `
       <section class="section">
-        <h2 class="section-title">GPS tracker / SIM <span class="count">${trackers.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">📡</span>GPS tracker / SIM <span class="count">${trackers.length}</span></h2>
         <div class="list">
           ${trackers.map((t) => {
             const s = trackerStatus(t);
@@ -395,7 +395,7 @@
       </section>` : ''}
 
       <section class="section">
-        <h2 class="section-title">Item servis <span class="count">${items.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🔧</span>Item servis <span class="count">${items.length}</span></h2>
         <div class="card" style="padding:4px 14px">
           <div class="items">
             ${sorted.map((x) => itemHTML(v, x.t, x.due)).join('')}
@@ -405,7 +405,7 @@
 
       ${recent.length ? `
       <section class="section">
-        <h2 class="section-title">Aktiviti terkini</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🕒</span>Aktiviti terkini</h2>
         ${recent.map(eventHTML).join('')}
         <button class="btn btn-ghost btn-block btn-sm" data-act="nav" data-view="history" type="button">Lihat semua sejarah</button>
       </section>` : ''}
@@ -473,9 +473,17 @@
 
     let html = '';
     let cur = '';
+    const monthCounts = new Map();
     events.forEach((e) => {
       const m = String(e.date).slice(0, 7);
-      if (m !== cur) { cur = m; html += `<div class="month-head">${fmtMonth(e.date)}</div>`; }
+      monthCounts.set(m, (monthCounts.get(m) || 0) + 1);
+    });
+    events.forEach((e) => {
+      const m = String(e.date).slice(0, 7);
+      if (m !== cur) {
+        cur = m;
+        html += `<div class="month-head"><span>${fmtMonth(e.date)}</span><span class="group-count">${monthCounts.get(m)}</span></div>`;
+      }
       html += eventHTML(e);
     });
 
@@ -486,6 +494,7 @@
     return `
       ${vehicleChips()}
       <div class="section" style="margin-top:8px">
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🔎</span>Tapis rekod <span class="count">${events.length}</span></h2>
         <div class="seg">
           ${filters.map((f) => `<button type="button" class="${state.histFilter === f[0] ? 'active' : ''}" data-act="hist-filter" data-f="${f[0]}">${f[1]}</button>`).join('')}
         </div>
@@ -624,21 +633,25 @@
       ${vehicleChips()}
 
       <div class="section" style="margin-top:8px">
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🗓️</span>Tempoh laporan</h2>
         <div class="seg">
           ${periods.map((p) => `<button type="button" class="${state.period === p[0] ? 'active' : ''}" data-act="period" data-p="${p[0]}">${p[1]}</button>`).join('')}
         </div>
       </div>
 
-      <div class="stat-grid">
-        <div class="stat"><b>${money0(spend)}</b><span>Jumlah kos</span></div>
-        <div class="stat"><b>${perKm != null ? 'RM ' + perKm.toFixed(2) : '—'}</b><span>Kos per km</span></div>
-        <div class="stat"><b>${avgKml != null ? avgKml.toFixed(1) : '—'}</b><span>Purata km/L</span></div>
-        <div class="stat"><b>${liters ? liters.toFixed(1) + ' L' : '—'}</b><span>Minyak diisi</span></div>
+      <div class="section" style="margin-top:16px">
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">📊</span>Ringkasan</h2>
+        <div class="stat-grid">
+          <div class="stat"><b>${money0(spend)}</b><span>Jumlah kos</span></div>
+          <div class="stat"><b>${perKm != null ? 'RM ' + perKm.toFixed(2) : '—'}</b><span>Kos per km</span></div>
+          <div class="stat"><b>${avgKml != null ? avgKml.toFixed(1) : '—'}</b><span>Purata km/L</span></div>
+          <div class="stat"><b>${liters ? liters.toFixed(1) + ' L' : '—'}</b><span>Minyak diisi</span></div>
+        </div>
       </div>
 
       ${months.length ? `
       <section class="section">
-        <h2 class="section-title">Kos bulanan</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">📅</span>Kos bulanan</h2>
         <div class="card" style="padding:12px 14px">
           <div class="bars">
             ${months.map((m) => `
@@ -653,7 +666,7 @@
 
       ${oils.length ? `
       <section class="section">
-        <h2 class="section-title">Minyak hitam — kos per 1,000 km</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🛢️</span>Minyak hitam — kos per 1,000 km</h2>
         <div class="card" style="padding:6px 14px 10px">
           <table class="tbl">
             <thead><tr><th>Jenama</th><th class="r">Kali</th><th class="r">Purata</th><th class="r">RM / 1,000 km</th></tr></thead>
@@ -672,7 +685,7 @@
 
       ${stations.length > 1 ? `
       <section class="section">
-        <h2 class="section-title">Prestasi ikut stesen minyak</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">⛽</span>Prestasi ikut stesen minyak</h2>
         <div class="card" style="padding:6px 14px 10px">
           <table class="tbl">
             <thead><tr><th>Stesen</th><th class="r">Isi</th><th class="r">Purata km/L</th></tr></thead>
@@ -690,7 +703,7 @@
 
       ${cats.length ? `
       <section class="section">
-        <h2 class="section-title">Kos ikut kategori</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🗂️</span>Kos ikut kategori</h2>
         <div class="card" style="padding:6px 14px 10px">
           <table class="tbl">
             <thead><tr><th>Kategori</th><th class="r">Jumlah</th><th class="r">%</th></tr></thead>
@@ -707,7 +720,7 @@
 
       ${series.length ? `
       <section class="section">
-        <h2 class="section-title">Isi minyak terkini</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🧾</span>Isi minyak terkini</h2>
         <div class="card" style="padding:6px 14px 10px">
           <table class="tbl">
             <thead><tr><th>Tarikh</th><th class="r">Jarak</th><th class="r">Liter</th><th class="r">km/L</th></tr></thead>
@@ -735,7 +748,7 @@
 
     return `
       <section class="section" style="margin-top:14px">
-        <h2 class="section-title">Kenderaan <span class="count">${vehicles.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🚗</span>Kenderaan <span class="count">${vehicles.length}</span></h2>
         <div class="list">
           ${vehicles.map((v) => `
             <div class="due-row" style="cursor:default">
@@ -752,7 +765,7 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title">GPS tracker &amp; SIM <span class="count">${trackers.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">📡</span>GPS tracker &amp; SIM <span class="count">${trackers.length}</span></h2>
         ${trackers.length ? `
         <div class="list">
           ${trackers.map((t) => {
@@ -776,12 +789,16 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title">Katalog servis <span class="count">${types.length}</span></h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🧰</span>Katalog servis <span class="count">${types.length}</span></h2>
         <div class="card" style="padding:6px 14px">
           ${['motorcycle', 'car', 'both'].map((grp) => {
             const list = types.filter((t) => t.applies_to === grp);
             if (!list.length) return '';
-            const label = grp === 'motorcycle' ? 'Motosikal' : grp === 'car' ? 'Kereta' : 'Umum';
+            const meta = grp === 'motorcycle'
+              ? { label: 'Motosikal', ico: '🏍️' }
+              : grp === 'car'
+                ? { label: 'Kereta', ico: '🚗' }
+                : { label: 'Umum', ico: '📦' };
             const row = (t) => `
               <div class="item" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
                 <div>
@@ -796,9 +813,13 @@
             const interval = list.filter((t) => t.track !== 'history');
             const history = list.filter((t) => t.track === 'history');
             return `
-              <div class="month-head" style="position:static;background:transparent;padding:12px 0 6px">${label}</div>
+              <div class="group-head is-${grp}">
+                <span class="group-ico" aria-hidden="true">${meta.ico}</span>
+                <span>${meta.label}</span>
+                <span class="group-count">${list.length}</span>
+              </div>
               ${interval.map(row).join('')}
-              ${history.length ? `<div class="tiny muted" style="padding:8px 0 2px">Barang &amp; ubah suai</div>${history.map(row).join('')}` : ''}
+              ${history.length ? `<div class="group-sub">Barang &amp; ubah suai <span class="group-count">${history.length}</span></div>${history.map(row).join('')}` : ''}
             `;
           }).join('')}
         </div>
@@ -807,7 +828,7 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title">Paparan</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">🎨</span>Paparan</h2>
         <div class="card" style="padding:14px">
           <div class="row" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
             <div>
@@ -833,7 +854,7 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title">Data</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">💾</span>Data</h2>
         <div class="card" style="padding:14px">
           <div class="row" style="flex-wrap:wrap">
             <button class="btn btn-ghost btn-sm" data-act="export" type="button">⬇ Eksport JSON</button>
@@ -851,9 +872,9 @@
       </section>
 
       <section class="section">
-        <h2 class="section-title">Tentang</h2>
+        <h2 class="section-title"><span class="title-ico" aria-hidden="true">ℹ️</span>Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.5.1</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.5.2</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
