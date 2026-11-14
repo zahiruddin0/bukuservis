@@ -9,9 +9,9 @@
 <link rel="icon" type="image/png" sizes="64x64" href="assets/favicon-64.png">
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
 <link rel="preload" as="image" href="assets/profile-256.jpg">
-<link rel="stylesheet" href="css/style.css?v=1.5.0">
+<link rel="stylesheet" href="css/style.css?v=1.5.1">
 <script>
-  /* elak kilat tema salah sebelum CSS/JS utama dimuatkan */
+  /* elak kilat tema / prestasi salah sebelum CSS/JS utama dimuatkan */
   (function () {
     try {
       var p = localStorage.getItem('bs.theme') || 'auto';
@@ -20,6 +20,14 @@
       document.documentElement.dataset.themePref = p;
       var m = document.querySelector('meta[name="theme-color"]');
       if (m) m.setAttribute('content', dark ? '#0a0e1f' : '#eef1ff');
+
+      var pp = localStorage.getItem('bs.perf') || 'auto';
+      if (pp !== 'lite' && pp !== 'full') pp = 'auto';
+      var lite = pp === 'lite' || (pp !== 'full' && window.matchMedia &&
+        (window.matchMedia('(max-width: 720px)').matches ||
+         window.matchMedia('(pointer: coarse)').matches));
+      document.documentElement.dataset.perf = lite ? 'lite' : 'full';
+      document.documentElement.dataset.perfPref = pp;
     } catch (e) { /* ignore */ }
   })();
 </script>
@@ -64,7 +72,7 @@
 <div id="modal-root"></div>
 <div id="toast" class="toast" hidden></div>
 
-<script src="js/api.js?v=1.5.0"></script>
-<script src="js/app.js?v=1.5.0"></script>
+<script src="js/api.js?v=1.5.1"></script>
+<script src="js/app.js?v=1.5.1"></script>
 </body>
 </html>

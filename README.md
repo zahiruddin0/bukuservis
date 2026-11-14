@@ -15,6 +15,7 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 - **GPS tracker & SIM** — simpan nombor SIM, telco, pelan dan **tarikh luput SIM**, dengan peringatan pada dashboard bila hampir atau sudah luput.
 - **Semua rekod boleh diedit atau dipadam** - servis, item, jenama minyak, tarikh, odometer, harga, minyak dan bacaan.
 - **Tema Aurora Glass** — permukaan kaca kabur (glassmorphism) di atas latar gradien; auto / cerah / gelap, boleh pilih sendiri dalam Tetapan.
+- **Mod prestasi** — Auto / Ringan / Penuh. Mod Ringan membuang blur kaca dan bayang berat supaya scroll lebih lancar pada telefon lama.
 - **PIN / kata laluan** — satu kelayakan log masuk (huruf dan nombor), cookie session bertandatangan.
 
 ## Struktur fail
@@ -23,8 +24,9 @@ Rekod servis, mileage dan isi minyak untuk kereta & motosikal. HTML/CSS/JS biasa
 bukuservis/
 ├── public/                  # fail statik yang dihantar ke browser
 │   ├── index.html
-│   ├── css/style.css        # tema aktif (V2 Aurora Glass)
+│   ├── css/style.css        # tema aktif (V2.1 Aurora Glass Lite)
 │   ├── css/themes/v1.css    # arkib tema V1
+│   ├── css/themes/v2.css    # arkib tema V2 Aurora Glass
 │   ├── js/api.js            # lapisan data (localStorage / API)
 │   ├── js/app.js            # UI + logik due + laporan
 │   ├── assets/              # favicon + gambar profil
@@ -214,11 +216,24 @@ Di dalam borang edit, butang **Buang rekod** juga tersedia di sebelah kiri. Untu
 
 Semua baris dalam **Sejarah mileage** dan **Sejarah item ini** boleh ditekan terus untuk edit atau padam.
 
-### Tema paparan
+### Tema dan prestasi paparan
 
-Tema aktif ialah **Aurora Glass** (glassmorphism): permukaan kaca kabur di atas latar gradien ungu-biru, dengan sokongan tema cerah, gelap dan auto (ikut sistem). Tekan butang ◐ di bar atas untuk tukar.
+Tema aktif ialah **V2.1 Aurora Glass Lite** (glassmorphism): permukaan kaca di atas latar gradien ungu-biru, dengan sokongan tema cerah, gelap dan auto (ikut sistem). Tekan butang ◐ di bar atas untuk tukar tema.
 
-Tema lama **V1** disimpan di `public/css/themes/v1.css`. Untuk kembali kepadanya, salin fail itu ganti `public/css/style.css`, kemudian naikkan nombor versi `?v=` dalam `public/index.html` supaya browser tidak menggunakan cache lama.
+Di **Tetapan → Paparan → Prestasi** ada tiga pilihan:
+
+- **Auto** — Ringan pada telefon (skrin ≤ 720px atau skrin sentuh) dan Penuh pada desktop. Ini nilai lalai.
+- **Ringan** — tiada `backdrop-filter`, permukaan lebih legap dan bayang ringkas. Paling lancar untuk telefon lama.
+- **Penuh** — efek kaca kabur penuh seperti V2.
+
+Mod Ringan juga menggantikan `background-attachment: fixed` dengan lapisan gradien tetap yang dicomposite sekali sahaja, jadi browser tidak perlu melukis semula latar setiap kali scroll.
+
+Tema lama disimpan sebagai arkib:
+
+- **V1**: `public/css/themes/v1.css`
+- **V2 Aurora Glass**: `public/css/themes/v2.css`
+
+Untuk kembali kepada mana-mana tema arkib, salin fail itu ganti `public/css/style.css`, kemudian naikkan nombor versi `?v=` dalam `public/index.html` supaya browser tidak menggunakan cache lama.
 
 ## 5. Sandaran data
 

@@ -819,6 +819,16 @@
                 <button type="button" class="${themePref() === k ? 'active' : ''}" data-act="theme" data-p="${k}">${label}</button>`).join('')}
             </div>
           </div>
+          <div class="row" style="justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-2)">
+            <div>
+              <div style="font-weight:650;font-size:14px">Prestasi</div>
+              <div class="tiny muted">Auto jadi Ringan pada telefon. Pilih Penuh untuk efek kaca penuh.</div>
+            </div>
+            <div class="seg">
+              ${[['auto', 'Auto'], ['lite', 'Ringan'], ['full', 'Penuh']].map(([k, label]) => `
+                <button type="button" class="${perfPref() === k ? 'active' : ''}" data-act="perf" data-p="${k}">${label}</button>`).join('')}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -843,7 +853,7 @@
       <section class="section">
         <h2 class="section-title">Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.5.0</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.5.1</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -1863,6 +1873,11 @@
         render();
         return;
       }
+      if (act === 'perf') {
+        setPerf(el.dataset.p);
+        render();
+        return;
+      }
       if (act === 'add-menu') { openAddMenu(); return; }
       if (act === 'add-visit') {
         const st = el.dataset.st ? Number(el.dataset.st) : '';
@@ -2093,6 +2108,32 @@
     applyTheme();
   }
 
+  function perfPref() {
+    let p = 'auto';
+    try { p = localStorage.getItem('bs.perf') || 'auto'; } catch (_) { /* ignore */ }
+    return (p === 'lite' || p === 'full') ? p : 'auto';
+  }
+
+  function resolvedPerf(pref) {
+    if (pref === 'lite' || pref === 'full') return pref;
+    const small = window.matchMedia && (
+      window.matchMedia('(max-width: 720px)').matches ||
+      window.matchMedia('(pointer: coarse)').matches
+    );
+    return small ? 'lite' : 'full';
+  }
+
+  function applyPerf() {
+    const pref = perfPref();
+    document.documentElement.dataset.perf = resolvedPerf(pref);
+    document.documentElement.dataset.perfPref = pref;
+  }
+
+  function setPerf(pref) {
+    try { localStorage.setItem('bs.perf', pref); } catch (_) { /* ignore */ }
+    applyPerf();
+  }
+
   function hideSplash(started) {
     const el = document.getElementById('splash');
     if (!el) return;
@@ -2129,6 +2170,7 @@
     // jangan biar splash tersangkut jika rangkaian lambat
     setTimeout(() => hideSplash(started), 8000);
     applyTheme();
+    applyPerf();
     wireGlobal();
 
     $('#theme-btn').addEventListener('click', () => {
@@ -2140,6 +2182,11 @@
       const onScheme = () => { if (themePref() === 'auto') applyTheme(); };
       if (mq.addEventListener) mq.addEventListener('change', onScheme);
       else if (mq.addListener) mq.addListener(onScheme);
+
+      const mqSize = window.matchMedia('(max-width: 720px)');
+      const onPerf = () => { if (perfPref() === 'auto') applyPerf(); };
+      if (mqSize.addEventListener) mqSize.addEventListener('change', onPerf);
+      else if (mqSize.addListener) mqSize.addListener(onPerf);
     }
 
     $('#fab').addEventListener('click', openAddMenu);

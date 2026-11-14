@@ -1,6 +1,7 @@
 /* ============================================================
-   BukuServis — Tema V2 "Aurora Glass" (Glassmorphism)
-   Tema V1 disimpan di css/themes/v1.css
+   BukuServis — Tema V2.1 "Aurora Glass Lite"
+   Tema V1: css/themes/v1.css · Tema V2: css/themes/v2.css
+   V2.1: kurang beban GPU semasa scroll pada telefon lama.
    ============================================================ */
 :root {
   --bg: #eef1ff;
@@ -17,22 +18,23 @@
   --surface-2: var(--glass-soft);
   --ink: #171a33;
   --ink-2: #454b6b;
-  --ink-3: #6a7090;
+  --ink-3: #646a89;
   --line: rgba(23, 26, 51, .10);
   --line-2: rgba(23, 26, 51, .06);
-  --accent: #5b4bf0;
+  --accent: #5645ea;
   --accent-2: #0b7fc4;
   --accent-ink: #ffffff;
-  --accent-soft: rgba(91, 75, 240, .16);
+  --accent-soft: rgba(86, 69, 234, .16);
   --ok: #0f9d63;
   --ok-soft: rgba(16, 185, 129, .16);
-  --warn: #b45309;
+  --warn: #a34707;
   --warn-soft: rgba(245, 158, 11, .20);
-  --bad: #d0342c;
+  --bad: #c02a22;
   --bad-soft: rgba(239, 68, 68, .16);
   --radius: 20px;
   --radius-sm: 14px;
-  --blur: 18px;
+  --glass-blur: blur(18px) saturate(160%);
+  --glass-blur-strong: blur(26px) saturate(170%);
   --shadow-sm: 0 6px 20px -14px rgba(38, 33, 110, .40), inset 0 1px 0 rgba(255, 255, 255, .50);
   --shadow: 0 14px 38px -16px rgba(38, 33, 110, .38), inset 0 1px 0 rgba(255, 255, 255, .60);
   --shadow-lg: 0 30px 70px -24px rgba(38, 33, 110, .45);
@@ -55,10 +57,10 @@ html[data-theme="dark"] {
   --ink-3: #8d95b8;
   --line: rgba(255, 255, 255, .13);
   --line-2: rgba(255, 255, 255, .08);
-  --accent: #8b7cff;
+  --accent: #a99dff;
   --accent-2: #22d3ee;
   --accent-ink: #0a0e1f;
-  --accent-soft: rgba(139, 124, 255, .22);
+  --accent-soft: rgba(169, 157, 255, .22);
   --ok: #4ade80;
   --ok-soft: rgba(74, 222, 128, .16);
   --warn: #fbbf24;
@@ -70,6 +72,55 @@ html[data-theme="dark"] {
   --shadow-lg: 0 36px 80px -24px rgba(0, 0, 0, .88);
 }
 
+/* Mod ringan: tiada blur, permukaan lebih legap, bayang ringkas */
+html[data-perf="lite"] {
+  --glass-blur: none;
+  --glass-blur-strong: none;
+  --glass: rgba(255, 255, 255, .86);
+  --glass-strong: rgba(255, 255, 255, .96);
+  --glass-soft: rgba(255, 255, 255, .70);
+  --glass-border: rgba(255, 255, 255, .92);
+  --shadow-sm: 0 1px 2px rgba(38, 33, 110, .08);
+  --shadow: 0 2px 10px rgba(38, 33, 110, .10);
+  --shadow-lg: 0 12px 30px rgba(38, 33, 110, .18);
+}
+
+html[data-theme="dark"][data-perf="lite"] {
+  --glass: rgba(24, 30, 54, .88);
+  --glass-strong: rgba(24, 30, 54, .96);
+  --glass-soft: rgba(24, 30, 54, .72);
+  --glass-border: rgba(255, 255, 255, .18);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .45);
+  --shadow: 0 2px 12px rgba(0, 0, 0, .50);
+  --shadow-lg: 0 14px 34px rgba(0, 0, 0, .65);
+}
+
+/* Telefon / skrin kecil: auto mod ringan melainkan pengguna pilih "Penuh" */
+@media (max-width: 720px), (pointer: coarse) {
+  :root:not([data-perf="full"]) {
+    --glass-blur: none;
+    --glass-blur-strong: none;
+    --glass: rgba(255, 255, 255, .86);
+    --glass-strong: rgba(255, 255, 255, .96);
+    --glass-soft: rgba(255, 255, 255, .70);
+    --glass-border: rgba(255, 255, 255, .92);
+    --shadow-sm: 0 1px 2px rgba(38, 33, 110, .08);
+    --shadow: 0 2px 10px rgba(38, 33, 110, .10);
+    --shadow-lg: 0 12px 30px rgba(38, 33, 110, .18);
+  }
+
+  html[data-theme="dark"]:not([data-perf="full"]) {
+    --glass: rgba(24, 30, 54, .88);
+    --glass-strong: rgba(24, 30, 54, .96);
+    --glass-soft: rgba(24, 30, 54, .72);
+    --glass-border: rgba(255, 255, 255, .18);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, .45);
+    --shadow: 0 2px 12px rgba(0, 0, 0, .50);
+    --shadow-lg: 0 14px 34px rgba(0, 0, 0, .65);
+  }
+}
+
+
 * { box-sizing: border-box; }
 
 [hidden] { display: none !important; }
@@ -80,16 +131,27 @@ html { background: var(--bg); }
 
 body {
   font-family: var(--font);
-  background-color: var(--bg);
-  background-image: var(--bg-image);
-  background-attachment: fixed;
-  background-repeat: no-repeat;
+  background: transparent;
   color: var(--ink);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -webkit-text-size-adjust: 100%;
   -webkit-tap-highlight-color: transparent;
   overscroll-behavior-y: none;
+}
+
+/* Latar gradien sebagai lapisan tetap (bukan background-attachment: fixed)
+   supaya browser boleh composite sekali sahaja dan tidak repaint semasa scroll. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-color: var(--bg);
+  background-image: var(--bg-image);
+  background-repeat: no-repeat;
+  pointer-events: none;
+  transform: translateZ(0);
 }
 
 ::selection { background: var(--accent); color: var(--accent-ink); }
@@ -112,8 +174,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tabbar,
 .toast,
 .month-head {
-  -webkit-backdrop-filter: blur(var(--blur)) saturate(160%);
-  backdrop-filter: blur(var(--blur)) saturate(160%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 .app {
@@ -137,8 +199,8 @@ button, input, select, textarea { font: inherit; color: inherit; }
   border-bottom: 1px solid var(--glass-border);
   border-radius: 0 0 20px 20px;
   box-shadow: 0 14px 34px -28px rgba(38, 33, 110, .8);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 .brand { display: flex; align-items: center; gap: 10px; }
@@ -262,7 +324,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
   cursor: pointer;
   white-space: nowrap;
   box-shadow: var(--shadow-sm);
-  transition: all .15s;
+  transition: background-color .15s, border-color .15s, color .15s, box-shadow .15s;
 }
 .chip:hover { border-color: var(--accent); color: var(--ink); }
 .chip.active {
@@ -530,9 +592,7 @@ textarea.input { resize: vertical; min-height: 64px; }
 .sheet-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(10, 14, 31, .42);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: rgba(10, 14, 31, .52);
   animation: fade .18s ease;
 }
 
@@ -551,8 +611,8 @@ textarea.input { resize: vertical; min-height: 64px; }
   border-bottom: 0;
   border-radius: 22px 22px 0 0;
   box-shadow: var(--shadow-lg);
-  -webkit-backdrop-filter: blur(30px) saturate(170%);
-  backdrop-filter: blur(30px) saturate(170%);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
   animation: slideUp .22s cubic-bezier(.2, .8, .2, 1);
 }
 
@@ -627,11 +687,11 @@ textarea.input { resize: vertical; min-height: 64px; }
   color: var(--ink-3);
   padding: 8px 10px;
   margin: 0 -2px;
-  background: var(--glass-soft);
+  background: var(--glass);
   border: 1px solid var(--glass-border);
   border-radius: 10px;
-  -webkit-backdrop-filter: blur(12px) saturate(160%);
-  backdrop-filter: blur(12px) saturate(160%);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
 }
 
 .event {
@@ -800,8 +860,8 @@ table.tbl .strong { font-weight: 700; }
   border: 1px solid var(--glass-border);
   border-radius: 20px;
   box-shadow: var(--shadow-lg);
-  -webkit-backdrop-filter: blur(24px) saturate(170%);
-  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
 }
 
 .tab {
@@ -860,8 +920,8 @@ table.tbl .strong { font-weight: 700; }
   font-size: 13.5px;
   font-weight: 600;
   box-shadow: var(--shadow-lg);
-  -webkit-backdrop-filter: blur(20px) saturate(170%);
-  backdrop-filter: blur(20px) saturate(170%);
+  -webkit-backdrop-filter: var(--glass-blur-strong);
+  backdrop-filter: var(--glass-blur-strong);
   opacity: 0;
   transition: opacity .2s, transform .2s;
   pointer-events: none;
@@ -943,7 +1003,6 @@ table.tbl .strong { font-weight: 700; }
   place-items: center;
   background-color: var(--bg);
   background-image: var(--bg-image);
-  background-attachment: fixed;
   background-repeat: no-repeat;
   transition: opacity .38s ease, visibility .38s ease;
 }
