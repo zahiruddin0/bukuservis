@@ -874,7 +874,7 @@
       <section class="section">
         <h2 class="section-title"><span class="title-ico" aria-hidden="true">ℹ️</span>Tentang</h2>
         <div class="card" style="padding:14px">
-          <div class="kv"><span class="k">Versi</span><span class="v">1.5.2</span></div>
+          <div class="kv"><span class="k">Versi</span><span class="v">1.5.3</span></div>
           <div class="kv"><span class="k">Mod</span><span class="v">${state.mode === 'remote' ? 'Cloudflare D1' : 'Demo (localStorage)'}</span></div>
           <div class="note">BukuServis — rekod servis, mileage dan isi minyak untuk kereta &amp; motosikal. Semua rekod boleh diedit semula bila-bila masa.</div>
         </div>
@@ -2049,7 +2049,7 @@
 
     $('#view').innerHTML = `
       <div class="login">
-        <div class="brand-mark">BS</div>
+        <div class="brand-mark brand-avatar"><img src="assets/profile-256.jpg?v=1.5.3" alt="Foto profil Zahiruddin"></div>
         <h1>BukuServis</h1>
         <p>Masukkan PIN atau kata laluan untuk buka buku servis kau.</p>
         <div class="card">
